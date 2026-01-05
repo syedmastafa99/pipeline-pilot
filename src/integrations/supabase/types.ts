@@ -197,6 +197,7 @@ export type Database = {
         | "fingerprint"
         | "visa_issued"
         | "flight"
+        | "manpower"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -336,6 +337,7 @@ export const Constants = {
         "fingerprint",
         "visa_issued",
         "flight",
+        "manpower",
       ],
     },
   },
