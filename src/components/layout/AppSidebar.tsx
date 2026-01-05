@@ -5,7 +5,8 @@ import {
   FileBarChart, 
   Upload, 
   Settings,
-  Plane
+  Plane,
+  LogOut
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import {
@@ -21,6 +22,10 @@ import {
   SidebarFooter,
   useSidebar,
 } from '@/components/ui/sidebar';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 const mainNavItems = [
   { title: 'Dashboard', url: '/', icon: LayoutDashboard },
@@ -37,6 +42,18 @@ const settingsNavItems = [
 export function AppSidebar() {
   const { state } = useSidebar();
   const isCollapsed = state === 'collapsed';
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    const { error } = await signOut();
+    if (error) {
+      toast.error('Failed to sign out');
+    } else {
+      toast.success('Signed out successfully');
+      navigate('/auth');
+    }
+  };
 
   return (
     <Sidebar className="border-r border-sidebar-border">
@@ -110,12 +127,34 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="p-4">
-        {!isCollapsed && (
-          <div className="rounded-lg bg-sidebar-accent/50 p-3">
-            <p className="text-xs text-sidebar-foreground/60">
-              © 2024 RecruitFlow
-            </p>
+        {!isCollapsed ? (
+          <div className="space-y-3">
+            {user && (
+              <div className="rounded-lg bg-sidebar-accent/50 p-3">
+                <p className="text-xs text-sidebar-foreground/60 truncate">
+                  {user.email}
+                </p>
+              </div>
+            )}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="w-full gap-2"
+              onClick={handleSignOut}
+            >
+              <LogOut className="h-4 w-4" />
+              Sign Out
+            </Button>
           </div>
+        ) : (
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="w-full"
+            onClick={handleSignOut}
+          >
+            <LogOut className="h-4 w-4" />
+          </Button>
         )}
       </SidebarFooter>
     </Sidebar>

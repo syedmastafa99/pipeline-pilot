@@ -17,6 +17,7 @@ export interface Candidate {
   notes: string | null;
   created_at: string;
   updated_at: string;
+  user_id: string | null;
 }
 
 export interface CreateCandidateInput {
@@ -29,6 +30,14 @@ export interface CreateCandidateInput {
   employer?: string;
   job_title?: string;
   notes?: string;
+}
+
+export interface StageHistory {
+  id: string;
+  candidate_id: string;
+  stage: StageKey;
+  completed_at: string;
+  notes: string | null;
 }
 
 export const useCandidates = () => {
@@ -63,14 +72,34 @@ export const useCandidate = (id: string) => {
   });
 };
 
+export const useCandidateStageHistory = (candidateId: string) => {
+  return useQuery({
+    queryKey: ['stage-history', candidateId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('stage_history')
+        .select('*')
+        .eq('candidate_id', candidateId)
+        .order('completed_at', { ascending: true });
+      
+      if (error) throw error;
+      return data as StageHistory[];
+    },
+    enabled: !!candidateId,
+  });
+};
+
 export const useCreateCandidate = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
     mutationFn: async (input: CreateCandidateInput) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('You must be logged in to create a candidate');
+      
       const { data, error } = await supabase
         .from('candidates')
-        .insert([input])
+        .insert([{ ...input, user_id: user.id }])
         .select()
         .single();
       
@@ -118,6 +147,9 @@ export const useUpdateCandidateStage = () => {
   
   return useMutation({
     mutationFn: async ({ id, stage }: { id: string; stage: StageKey }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('You must be logged in to update stage');
+      
       const { data, error } = await supabase
         .from('candidates')
         .update({ current_stage: stage })
@@ -127,16 +159,17 @@ export const useUpdateCandidateStage = () => {
       
       if (error) throw error;
       
-      // Also record in stage history
+      // Also record in stage history with user_id
       await supabase
         .from('stage_history')
-        .insert([{ candidate_id: id, stage }]);
+        .insert([{ candidate_id: id, stage, user_id: user.id }]);
       
       return data as Candidate;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['candidates'] });
       queryClient.invalidateQueries({ queryKey: ['candidate', data.id] });
+      queryClient.invalidateQueries({ queryKey: ['stage-history', data.id] });
       toast.success('Stage updated successfully');
     },
     onError: (error) => {
@@ -172,9 +205,14 @@ export const useBulkCreateCandidates = () => {
   
   return useMutation({
     mutationFn: async (candidates: CreateCandidateInput[]) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('You must be logged in to import candidates');
+      
+      const candidatesWithUserId = candidates.map(c => ({ ...c, user_id: user.id }));
+      
       const { data, error } = await supabase
         .from('candidates')
-        .insert(candidates)
+        .insert(candidatesWithUserId)
         .select();
       
       if (error) throw error;

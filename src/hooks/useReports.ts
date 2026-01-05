@@ -13,6 +13,7 @@ export interface DailyReport {
   flights_completed: number | null;
   summary: string | null;
   created_at: string;
+  user_id: string | null;
 }
 
 export const useReports = () => {
@@ -36,6 +37,9 @@ export const useGenerateDailyReport = () => {
   
   return useMutation({
     mutationFn: async (date: Date = new Date()) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('You must be logged in to generate a report');
+      
       const reportDate = format(date, 'yyyy-MM-dd');
       const startOfDayISO = startOfDay(date).toISOString();
       const endOfDayISO = endOfDay(date).toISOString();
@@ -85,6 +89,7 @@ export const useGenerateDailyReport = () => {
         stage_completions: stageCompletions || 0,
         visas_issued: visasIssued || 0,
         flights_completed: flightsCompleted || 0,
+        user_id: user.id,
       };
       
       if (existingReport) {

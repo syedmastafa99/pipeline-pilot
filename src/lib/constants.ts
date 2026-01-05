@@ -23,6 +23,10 @@ export const getStageIndex = (stage: StageKey): number => {
   return STAGES.findIndex((s) => s.key === stage);
 };
 
+export const getStageLabel = (stage: StageKey): string => {
+  return STAGE_MAP[stage]?.label || stage;
+};
+
 export const getNextStage = (currentStage: StageKey): StageKey | null => {
   const currentIndex = getStageIndex(currentStage);
   if (currentIndex < STAGES.length - 1) {

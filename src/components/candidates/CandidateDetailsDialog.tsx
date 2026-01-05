@@ -4,10 +4,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
 import { StageBadge } from './StageBadge';
-import { Candidate } from '@/hooks/useCandidates';
-import { STAGES, getStageIndex } from '@/lib/constants';
+import { Candidate, useCandidateStageHistory } from '@/hooks/useCandidates';
+import { STAGES, getStageIndex, getStageLabel } from '@/lib/constants';
 import { 
   User, 
   Phone, 
@@ -17,7 +16,9 @@ import {
   FileText,
   Globe,
   Calendar,
-  Hash
+  Hash,
+  CheckCircle2,
+  Clock
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -28,14 +29,22 @@ interface CandidateDetailsDialogProps {
 }
 
 export function CandidateDetailsDialog({ candidate, open, onOpenChange }: CandidateDetailsDialogProps) {
+  const { data: stageHistory = [] } = useCandidateStageHistory(candidate?.id || '');
+  
   if (!candidate) return null;
 
   const stageIndex = getStageIndex(candidate.current_stage);
   const progress = ((stageIndex + 1) / STAGES.length) * 100;
+  
+  // Create a map of stage to completion date
+  const stageDates = stageHistory.reduce((acc, entry) => {
+    acc[entry.stage] = entry.completed_at;
+    return acc;
+  }, {} as Record<string, string>);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-display text-xl">Candidate Details</DialogTitle>
         </DialogHeader>
@@ -65,6 +74,53 @@ export function CandidateDetailsDialog({ candidate, open, onOpenChange }: Candid
                 className="h-full rounded-full bg-primary transition-all duration-500"
                 style={{ width: `${progress}%` }}
               />
+            </div>
+          </div>
+
+          {/* Stage Dates Timeline */}
+          <div className="space-y-3">
+            <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              Stage Completion Dates
+            </h4>
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {STAGES.map((stage, index) => {
+                const completedDate = stageDates[stage.key];
+                const isCompleted = index <= stageIndex;
+                const isCurrent = stage.key === candidate.current_stage;
+                
+                return (
+                  <div 
+                    key={stage.key}
+                    className={`flex items-center gap-2 rounded-lg border p-2 text-sm ${
+                      isCurrent 
+                        ? 'border-primary bg-primary/5' 
+                        : isCompleted 
+                          ? 'border-green-500/30 bg-green-500/5' 
+                          : 'border-muted bg-muted/30'
+                    }`}
+                  >
+                    {isCompleted ? (
+                      <CheckCircle2 className={`h-4 w-4 flex-shrink-0 ${isCurrent ? 'text-primary' : 'text-green-500'}`} />
+                    ) : (
+                      <Clock className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className={`truncate font-medium ${isCompleted ? '' : 'text-muted-foreground'}`}>
+                        {getStageLabel(stage.key)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {completedDate 
+                          ? format(new Date(completedDate), 'MMM dd, yyyy')
+                          : isCurrent 
+                            ? 'In progress' 
+                            : 'Pending'
+                        }
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 

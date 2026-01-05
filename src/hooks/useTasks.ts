@@ -13,6 +13,7 @@ export interface Task {
   related_candidate_id: string | null;
   created_at: string;
   updated_at: string;
+  user_id: string | null;
 }
 
 export interface CreateTaskInput {
@@ -44,9 +45,12 @@ export const useCreateTask = () => {
   
   return useMutation({
     mutationFn: async (input: CreateTaskInput) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('You must be logged in to create a task');
+      
       const { data, error } = await supabase
         .from('agency_tasks')
-        .insert([input])
+        .insert([{ ...input, user_id: user.id }])
         .select()
         .single();
       

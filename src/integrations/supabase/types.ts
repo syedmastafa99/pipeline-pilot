@@ -26,6 +26,7 @@ export type Database = {
           status: string | null
           title: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           assigned_to?: string | null
@@ -38,6 +39,7 @@ export type Database = {
           status?: string | null
           title: string
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           assigned_to?: string | null
@@ -50,6 +52,7 @@ export type Database = {
           status?: string | null
           title?: string
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -76,6 +79,7 @@ export type Database = {
           passport_number: string | null
           phone: string | null
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -91,6 +95,7 @@ export type Database = {
           passport_number?: string | null
           phone?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -106,6 +111,7 @@ export type Database = {
           passport_number?: string | null
           phone?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -119,6 +125,7 @@ export type Database = {
           stage_completions: number | null
           summary: string | null
           total_candidates: number | null
+          user_id: string | null
           visas_issued: number | null
         }
         Insert: {
@@ -130,6 +137,7 @@ export type Database = {
           stage_completions?: number | null
           summary?: string | null
           total_candidates?: number | null
+          user_id?: string | null
           visas_issued?: number | null
         }
         Update: {
@@ -141,6 +149,7 @@ export type Database = {
           stage_completions?: number | null
           summary?: string | null
           total_candidates?: number | null
+          user_id?: string | null
           visas_issued?: number | null
         }
         Relationships: []
@@ -152,6 +161,7 @@ export type Database = {
           id: string
           notes: string | null
           stage: Database["public"]["Enums"]["candidate_stage"]
+          user_id: string | null
         }
         Insert: {
           candidate_id: string
@@ -159,6 +169,7 @@ export type Database = {
           id?: string
           notes?: string | null
           stage: Database["public"]["Enums"]["candidate_stage"]
+          user_id?: string | null
         }
         Update: {
           candidate_id?: string
@@ -166,6 +177,7 @@ export type Database = {
           id?: string
           notes?: string | null
           stage?: Database["public"]["Enums"]["candidate_stage"]
+          user_id?: string | null
         }
         Relationships: [
           {
