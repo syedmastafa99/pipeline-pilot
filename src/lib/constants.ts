@@ -1,14 +1,15 @@
 export const STAGES = [
   { key: 'passport_received', label: 'Passport Received', shortLabel: 'Passport', color: 'stage-passport' },
+  { key: 'interview', label: 'Interview', shortLabel: 'Interview', color: 'stage-interview' },
   { key: 'medical', label: 'Medical', shortLabel: 'Medical', color: 'stage-medical' },
   { key: 'police_clearance', label: 'Police Clearance', shortLabel: 'Police', color: 'stage-police' },
-  { key: 'interview', label: 'Interview', shortLabel: 'Interview', color: 'stage-interview' },
   { key: 'mofa', label: 'MOFA', shortLabel: 'MOFA', color: 'stage-mofa' },
   { key: 'taseer', label: 'Taseer', shortLabel: 'Taseer', color: 'stage-taseer' },
   { key: 'takamul', label: 'Takamul', shortLabel: 'Takamul', color: 'stage-takamul' },
   { key: 'training', label: 'Training', shortLabel: 'Training', color: 'stage-training' },
   { key: 'fingerprint', label: 'Fingerprint', shortLabel: 'Fingerprint', color: 'stage-fingerprint' },
   { key: 'visa_issued', label: 'Visa Issued', shortLabel: 'Visa', color: 'stage-visa' },
+  { key: 'manpower', label: 'Manpower', shortLabel: 'Manpower', color: 'stage-manpower' },
   { key: 'flight', label: 'Flight', shortLabel: 'Flight', color: 'stage-flight' },
 ] as const;
 
