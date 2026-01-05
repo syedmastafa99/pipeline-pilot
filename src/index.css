@@ -48,6 +48,7 @@
     --stage-training: 45 85% 50%;
     --stage-fingerprint: 260 55% 55%;
     --stage-visa: 140 70% 40%;
+    --stage-manpower: 190 70% 45%;
     --stage-flight: 160 80% 35%;
 
     /* Status colors */
