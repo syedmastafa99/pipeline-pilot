@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { SidebarProvider, SidebarTrigger, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from './AppSidebar';
+import { AIAssistant } from '@/components/ai/AIAssistant';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -20,6 +21,7 @@ export function AppLayout({ children }: AppLayoutProps) {
           </main>
         </SidebarInset>
       </div>
+      <AIAssistant />
     </SidebarProvider>
   );
 }

@@ -11,7 +11,6 @@ import Upload from "./pages/Upload";
 import Settings from "./pages/Settings";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
-import { AIAssistant } from "./components/ai/AIAssistant";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -32,7 +31,6 @@ const App = () => (
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
-        <AIAssistant />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
