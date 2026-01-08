@@ -2,8 +2,8 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { STAGES } from '@/lib/constants';
-import { Settings2, Database, Workflow } from 'lucide-react';
-
+import { Database, Workflow } from 'lucide-react';
+import { AdminDiagnostics } from '@/components/diagnostics/AdminDiagnostics';
 export default function Settings() {
   return (
     <AppLayout>
@@ -82,6 +82,9 @@ export default function Settings() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Admin Diagnostics */}
+        <AdminDiagnostics />
       </div>
     </AppLayout>
   );
