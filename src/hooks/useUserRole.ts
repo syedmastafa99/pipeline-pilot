@@ -22,22 +22,13 @@ export function useUserRole() {
 
     const checkUserStatus = async () => {
       try {
-        const [{ data: roleData }, { data: profileData }] = await Promise.all([
-          supabase
-            .from('user_roles')
-            .select('role')
-            .eq('user_id', user.id)
-            .eq('role', 'admin')
-            .maybeSingle(),
-          supabase
-            .from('profiles')
-            .select('is_approved')
-            .eq('id', user.id)
-            .maybeSingle(),
+        const [{ data: isAdminData }, { data: isApprovedData }] = await Promise.all([
+          supabase.rpc('has_role', { _user_id: user.id, _role: 'admin' }),
+          supabase.rpc('is_approved', { _user_id: user.id }),
         ]);
 
-        setIsAdmin(!!roleData);
-        setIsApproved(profileData?.is_approved ?? false);
+        setIsAdmin(Boolean(isAdminData));
+        setIsApproved(Boolean(isApprovedData));
       } catch (error) {
         console.error('Error checking user status:', error);
         setIsAdmin(false);
