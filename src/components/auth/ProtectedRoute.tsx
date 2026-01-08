@@ -33,35 +33,28 @@ export function ProtectedRoute({ children, requireApproval = true }: ProtectedRo
     if (!user) return;
 
     try {
-      // Check if user is admin
-      const { data: roleData } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id)
-        .eq('role', 'admin')
-        .maybeSingle();
+      // Use backend functions so this works even if direct table SELECT is restricted by RLS
+      const { data: userIsAdmin } = await supabase.rpc('has_role', {
+        _user_id: user.id,
+        _role: 'admin',
+      });
 
-      const userIsAdmin = !!roleData;
-      setIsAdmin(userIsAdmin);
+      const isAdminBool = Boolean(userIsAdmin);
+      setIsAdmin(isAdminBool);
 
       // Admins bypass approval check
-      if (userIsAdmin) {
+      if (isAdminBool) {
         setIsApproved(true);
         setCheckingApproval(false);
         return;
       }
 
-      // Check approval status for non-admins
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('is_approved')
-        .eq('id', user.id)
-        .maybeSingle();
-
-      setIsApproved(profileData?.is_approved ?? false);
+      const { data: approved } = await supabase.rpc('is_approved', { _user_id: user.id });
+      setIsApproved(Boolean(approved));
     } catch (error) {
       console.error('Error checking approval status:', error);
       setIsApproved(false);
+      setIsAdmin(false);
     } finally {
       setCheckingApproval(false);
     }
