@@ -22,26 +22,29 @@ interface PendingUser {
 export default function Admin() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { isAdmin, loading: roleLoading } = useUserRole();
+  const { isAdmin, loading: roleLoading, checked: roleChecked } = useUserRole();
   const { toast } = useToast();
   const [pendingUsers, setPendingUsers] = useState<PendingUser[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!authLoading && !roleLoading) {
-      if (!user) {
-        navigate('/auth');
-      } else if (!isAdmin) {
-        navigate('/');
-        toast({
-          title: "Access Denied",
-          description: "You don't have permission to access the admin panel.",
-          variant: "destructive",
-        });
-      }
+    if (authLoading || roleLoading || !roleChecked) return;
+
+    if (!user) {
+      navigate('/auth');
+      return;
     }
-  }, [user, isAdmin, authLoading, roleLoading, navigate, toast]);
+
+    if (!isAdmin) {
+      navigate('/');
+      toast({
+        title: 'Access Denied',
+        description: "You don't have permission to access the admin panel.",
+        variant: 'destructive',
+      });
+    }
+  }, [user, isAdmin, authLoading, roleLoading, roleChecked, navigate, toast]);
 
   useEffect(() => {
     if (isAdmin) {
@@ -130,7 +133,7 @@ export default function Admin() {
     }
   };
 
-  if (authLoading || roleLoading) {
+  if (authLoading || roleLoading || !roleChecked) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

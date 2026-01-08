@@ -6,45 +6,50 @@ export function useUserRole() {
   const { user } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isApproved, setIsApproved] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [checked, setChecked] = useState(false);
+  const loading = !checked;
 
   useEffect(() => {
+    // reset when user changes
+    setChecked(false);
+
     if (!user) {
       setIsAdmin(false);
       setIsApproved(false);
-      setLoading(false);
+      setChecked(true);
       return;
     }
 
     const checkUserStatus = async () => {
       try {
-        // Check if user is admin
-        const { data: roleData } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user.id)
-          .eq('role', 'admin')
-          .maybeSingle();
+        const [{ data: roleData }, { data: profileData }] = await Promise.all([
+          supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', user.id)
+            .eq('role', 'admin')
+            .maybeSingle(),
+          supabase
+            .from('profiles')
+            .select('is_approved')
+            .eq('id', user.id)
+            .maybeSingle(),
+        ]);
 
         setIsAdmin(!!roleData);
-
-        // Check if user is approved
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('is_approved')
-          .eq('id', user.id)
-          .maybeSingle();
-
         setIsApproved(profileData?.is_approved ?? false);
       } catch (error) {
         console.error('Error checking user status:', error);
+        setIsAdmin(false);
+        setIsApproved(false);
       } finally {
-        setLoading(false);
+        // ensure other state updates land before consumers react
+        setTimeout(() => setChecked(true), 0);
       }
     };
 
     checkUserStatus();
   }, [user]);
 
-  return { isAdmin, isApproved, loading };
+  return { isAdmin, isApproved, loading, checked };
 }
