@@ -9,14 +9,16 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-import { Check, X, Shield, Loader2 } from 'lucide-react';
+import { Check, X, Shield, Loader2, ShieldCheck } from 'lucide-react';
 import { format } from 'date-fns';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-interface PendingUser {
+interface UserWithRole {
   id: string;
   email: string;
   is_approved: boolean;
   created_at: string;
+  role: 'admin' | 'user' | null;
 }
 
 export default function Admin() {
@@ -24,7 +26,7 @@ export default function Admin() {
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: roleLoading, checked: roleChecked } = useUserRole();
   const { toast } = useToast();
-  const [pendingUsers, setPendingUsers] = useState<PendingUser[]>([]);
+  const [users, setUsers] = useState<UserWithRole[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
@@ -48,19 +50,37 @@ export default function Admin() {
 
   useEffect(() => {
     if (isAdmin) {
-      fetchPendingUsers();
+      fetchUsers();
     }
   }, [isAdmin]);
 
-  const fetchPendingUsers = async () => {
+  const fetchUsers = async () => {
     try {
-      const { data, error } = await supabase
+      // Fetch profiles
+      const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setPendingUsers(data || []);
+      if (profilesError) throw profilesError;
+
+      // Fetch all roles
+      const { data: roles, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('*');
+
+      if (rolesError) throw rolesError;
+
+      // Combine profiles with roles
+      const usersWithRoles: UserWithRole[] = (profiles || []).map(profile => {
+        const userRole = roles?.find(r => r.user_id === profile.id);
+        return {
+          ...profile,
+          role: userRole?.role || null,
+        };
+      });
+
+      setUsers(usersWithRoles);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast({
@@ -83,7 +103,7 @@ export default function Admin() {
 
       if (error) throw error;
 
-      setPendingUsers(prev =>
+      setUsers(prev =>
         prev.map(u => u.id === userId ? { ...u, is_approved: true } : u)
       );
 
@@ -113,7 +133,7 @@ export default function Admin() {
 
       if (error) throw error;
 
-      setPendingUsers(prev =>
+      setUsers(prev =>
         prev.map(u => u.id === userId ? { ...u, is_approved: false } : u)
       );
 
@@ -133,6 +153,57 @@ export default function Admin() {
     }
   };
 
+  const handleRoleChange = async (userId: string, newRole: 'admin' | 'user' | 'none') => {
+    setActionLoading(userId);
+    try {
+      const currentUser = users.find(u => u.id === userId);
+      
+      if (newRole === 'none') {
+        // Remove role
+        if (currentUser?.role) {
+          const { error } = await supabase
+            .from('user_roles')
+            .delete()
+            .eq('user_id', userId);
+          if (error) throw error;
+        }
+      } else {
+        if (currentUser?.role) {
+          // Update existing role
+          const { error } = await supabase
+            .from('user_roles')
+            .update({ role: newRole })
+            .eq('user_id', userId);
+          if (error) throw error;
+        } else {
+          // Insert new role
+          const { error } = await supabase
+            .from('user_roles')
+            .insert({ user_id: userId, role: newRole });
+          if (error) throw error;
+        }
+      }
+
+      setUsers(prev =>
+        prev.map(u => u.id === userId ? { ...u, role: newRole === 'none' ? null : newRole } : u)
+      );
+
+      toast({
+        title: "Role Updated",
+        description: `User role has been ${newRole === 'none' ? 'removed' : `set to ${newRole}`}.`,
+      });
+    } catch (error) {
+      console.error('Error updating role:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update user role.",
+        variant: "destructive",
+      });
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   if (authLoading || roleLoading || !roleChecked) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -145,8 +216,9 @@ export default function Admin() {
     return null;
   }
 
-  const pendingCount = pendingUsers.filter(u => !u.is_approved).length;
-  const approvedCount = pendingUsers.filter(u => u.is_approved).length;
+  const pendingCount = users.filter(u => !u.is_approved).length;
+  const approvedCount = users.filter(u => u.is_approved).length;
+  const adminCount = users.filter(u => u.role === 'admin').length;
 
   return (
     <AppLayout>
@@ -155,11 +227,11 @@ export default function Admin() {
           <Shield className="h-8 w-8 text-primary" />
           <div>
             <h1 className="text-3xl font-bold">Admin Panel</h1>
-            <p className="text-muted-foreground">Manage user registrations and approvals</p>
+            <p className="text-muted-foreground">Manage users, roles, and approvals</p>
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-3">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -180,13 +252,23 @@ export default function Admin() {
               <div className="text-3xl font-bold text-green-600">{approvedCount}</div>
             </CardContent>
           </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Admins
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-primary">{adminCount}</div>
+            </CardContent>
+          </Card>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>User Registrations</CardTitle>
+            <CardTitle>All Users & Roles</CardTitle>
             <CardDescription>
-              Review and approve user registrations
+              Manage user approvals and assign roles
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -194,9 +276,9 @@ export default function Admin() {
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               </div>
-            ) : pendingUsers.length === 0 ? (
+            ) : users.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">
-                No user registrations yet.
+                No users registered yet.
               </p>
             ) : (
               <Table>
@@ -205,18 +287,19 @@ export default function Admin() {
                     <TableHead>Email</TableHead>
                     <TableHead>Registered</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Role</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {pendingUsers.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell className="font-medium">{user.email}</TableCell>
+                  {users.map((u) => (
+                    <TableRow key={u.id}>
+                      <TableCell className="font-medium">{u.email}</TableCell>
                       <TableCell>
-                        {format(new Date(user.created_at), 'MMM d, yyyy HH:mm')}
+                        {format(new Date(u.created_at), 'MMM d, yyyy HH:mm')}
                       </TableCell>
                       <TableCell>
-                        {user.is_approved ? (
+                        {u.is_approved ? (
                           <Badge variant="default" className="bg-green-600">
                             Approved
                           </Badge>
@@ -226,15 +309,36 @@ export default function Admin() {
                           </Badge>
                         )}
                       </TableCell>
+                      <TableCell>
+                        <Select
+                          value={u.role || 'none'}
+                          onValueChange={(value) => handleRoleChange(u.id, value as 'admin' | 'user' | 'none')}
+                          disabled={actionLoading === u.id}
+                        >
+                          <SelectTrigger className="w-28">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">No Role</SelectItem>
+                            <SelectItem value="user">User</SelectItem>
+                            <SelectItem value="admin">
+                              <span className="flex items-center gap-1">
+                                <ShieldCheck className="h-3 w-3" />
+                                Admin
+                              </span>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          {!user.is_approved ? (
+                          {!u.is_approved ? (
                             <Button
                               size="sm"
-                              onClick={() => handleApprove(user.id)}
-                              disabled={actionLoading === user.id}
+                              onClick={() => handleApprove(u.id)}
+                              disabled={actionLoading === u.id}
                             >
-                              {actionLoading === user.id ? (
+                              {actionLoading === u.id ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
                               ) : (
                                 <Check className="h-4 w-4 mr-1" />
@@ -245,10 +349,10 @@ export default function Admin() {
                             <Button
                               size="sm"
                               variant="destructive"
-                              onClick={() => handleReject(user.id)}
-                              disabled={actionLoading === user.id}
+                              onClick={() => handleReject(u.id)}
+                              disabled={actionLoading === u.id}
                             >
-                              {actionLoading === user.id ? (
+                              {actionLoading === u.id ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
                               ) : (
                                 <X className="h-4 w-4 mr-1" />
