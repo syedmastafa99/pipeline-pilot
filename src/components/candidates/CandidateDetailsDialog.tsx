@@ -4,7 +4,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StageBadge } from './StageBadge';
+import { DocumentChecklist } from './DocumentChecklist';
 import { Candidate, useCandidateStageHistory } from '@/hooks/useCandidates';
 import { STAGES, getStageIndex, getStageLabel } from '@/lib/constants';
 import { 
@@ -18,7 +20,8 @@ import {
   Calendar,
   Hash,
   CheckCircle2,
-  Clock
+  Clock,
+  ClipboardList
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -161,6 +164,32 @@ export function CandidateDetailsDialog({ candidate, open, onOpenChange }: Candid
               <p className="rounded-lg bg-muted/50 p-3 text-sm">{candidate.notes}</p>
             </div>
           )}
+
+          {/* Document Checklist */}
+          <div className="space-y-3">
+            <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <ClipboardList className="h-4 w-4" />
+              Document Checklist - {getStageLabel(candidate.current_stage)}
+            </h4>
+            <Tabs defaultValue={candidate.current_stage} className="w-full">
+              <TabsList className="flex flex-wrap h-auto gap-1 bg-muted/50 p-1">
+                {STAGES.slice(0, stageIndex + 1).map((stage) => (
+                  <TabsTrigger 
+                    key={stage.key} 
+                    value={stage.key}
+                    className="text-xs px-2 py-1"
+                  >
+                    {stage.shortLabel}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+              {STAGES.slice(0, stageIndex + 1).map((stage) => (
+                <TabsContent key={stage.key} value={stage.key} className="mt-4">
+                  <DocumentChecklist candidateId={candidate.id} stage={stage.key} />
+                </TabsContent>
+              ))}
+            </Tabs>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
