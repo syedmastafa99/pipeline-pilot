@@ -17,6 +17,8 @@ interface CandidateDocument {
   is_completed: boolean;
   completed_at: string | null;
   notes: string | null;
+  file_url: string | null;
+  file_name: string | null;
 }
 
 export interface DocumentChecklistItem extends StageDocument {
@@ -24,6 +26,8 @@ export interface DocumentChecklistItem extends StageDocument {
   completed_at: string | null;
   notes: string | null;
   candidate_document_id: string | null;
+  file_url: string | null;
+  file_name: string | null;
 }
 
 export function useStageDocuments(stage: string) {
@@ -77,6 +81,8 @@ export function useCandidateDocuments(candidateId: string, stage: string) {
           completed_at: candidateDoc?.completed_at ?? null,
           notes: candidateDoc?.notes ?? null,
           candidate_document_id: candidateDoc?.id ?? null,
+          file_url: candidateDoc?.file_url ?? null,
+          file_name: candidateDoc?.file_name ?? null,
         };
       });
 
@@ -126,6 +132,118 @@ export function useToggleDocument() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["candidate-documents"] });
+    },
+  });
+}
+
+export function useUploadDocument() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      candidateId,
+      stageDocumentId,
+      candidateDocumentId,
+      file,
+    }: {
+      candidateId: string;
+      stageDocumentId: string;
+      candidateDocumentId: string | null;
+      file: File;
+    }) => {
+      // Upload file to storage
+      const fileExt = file.name.split(".").pop();
+      const filePath = `${candidateId}/${stageDocumentId}/${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("candidate-documents")
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from("candidate-documents")
+        .getPublicUrl(filePath);
+
+      const file_url = urlData.publicUrl;
+
+      if (candidateDocumentId) {
+        // Update existing record
+        const { error } = await supabase
+          .from("candidate_documents")
+          .update({
+            file_url: filePath,
+            file_name: file.name,
+          })
+          .eq("id", candidateDocumentId);
+
+        if (error) throw error;
+      } else {
+        // Insert new record with file
+        const { error } = await supabase.from("candidate_documents").insert({
+          candidate_id: candidateId,
+          stage_document_id: stageDocumentId,
+          is_completed: false,
+          file_url: filePath,
+          file_name: file.name,
+        });
+
+        if (error) throw error;
+      }
+
+      return filePath;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["candidate-documents"] });
+    },
+  });
+}
+
+export function useDeleteDocument() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      candidateDocumentId,
+      filePath,
+    }: {
+      candidateDocumentId: string;
+      filePath: string;
+    }) => {
+      // Delete from storage
+      const { error: deleteError } = await supabase.storage
+        .from("candidate-documents")
+        .remove([filePath]);
+
+      if (deleteError) throw deleteError;
+
+      // Update database record
+      const { error } = await supabase
+        .from("candidate_documents")
+        .update({
+          file_url: null,
+          file_name: null,
+        })
+        .eq("id", candidateDocumentId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["candidate-documents"] });
+    },
+  });
+}
+
+export function useGetSignedUrl() {
+  return useMutation({
+    mutationFn: async (filePath: string) => {
+      const { data, error } = await supabase.storage
+        .from("candidate-documents")
+        .createSignedUrl(filePath, 3600); // 1 hour expiry
+
+      if (error) throw error;
+      return data.signedUrl;
     },
   });
 }
