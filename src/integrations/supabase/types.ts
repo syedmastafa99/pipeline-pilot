@@ -260,6 +260,7 @@ export type Database = {
         | "takamul"
         | "training"
         | "fingerprint"
+        | "embassy"
         | "visa_issued"
         | "flight"
         | "manpower"
@@ -401,6 +402,7 @@ export const Constants = {
         "takamul",
         "training",
         "fingerprint",
+        "embassy",
         "visa_issued",
         "flight",
         "manpower",

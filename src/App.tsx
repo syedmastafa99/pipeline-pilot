@@ -10,7 +10,6 @@ import Reports from "./pages/Reports";
 import Upload from "./pages/Upload";
 import Settings from "./pages/Settings";
 import Auth from "./pages/Auth";
-import Admin from "./pages/Admin";
 import PendingApproval from "./pages/PendingApproval";
 import NotFound from "./pages/NotFound";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
@@ -32,7 +31,6 @@ const App = () => (
           <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
           <Route path="/upload" element={<ProtectedRoute><Upload /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-          <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

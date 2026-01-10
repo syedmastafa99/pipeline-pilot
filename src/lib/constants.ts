@@ -8,6 +8,7 @@ export const STAGES = [
   { key: 'takamul', label: 'Takamul', shortLabel: 'Takamul', color: 'stage-takamul' },
   { key: 'training', label: 'Training', shortLabel: 'Training', color: 'stage-training' },
   { key: 'fingerprint', label: 'Fingerprint', shortLabel: 'Fingerprint', color: 'stage-fingerprint' },
+  { key: 'embassy', label: 'Embassy', shortLabel: 'Embassy', color: 'stage-embassy' },
   { key: 'visa_issued', label: 'Visa Issued', shortLabel: 'Visa', color: 'stage-visa' },
   { key: 'manpower', label: 'Manpower', shortLabel: 'Manpower', color: 'stage-manpower' },
   { key: 'flight', label: 'Flight', shortLabel: 'Flight', color: 'stage-flight' },
