@@ -69,6 +69,8 @@ export type Database = {
           candidate_id: string
           completed_at: string | null
           created_at: string
+          file_name: string | null
+          file_url: string | null
           id: string
           is_completed: boolean | null
           notes: string | null
@@ -79,6 +81,8 @@ export type Database = {
           candidate_id: string
           completed_at?: string | null
           created_at?: string
+          file_name?: string | null
+          file_url?: string | null
           id?: string
           is_completed?: boolean | null
           notes?: string | null
@@ -89,6 +93,8 @@ export type Database = {
           candidate_id?: string
           completed_at?: string | null
           created_at?: string
+          file_name?: string | null
+          file_url?: string | null
           id?: string
           is_completed?: boolean | null
           notes?: string | null
