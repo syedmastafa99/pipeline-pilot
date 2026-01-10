@@ -64,6 +64,54 @@ export type Database = {
           },
         ]
       }
+      candidate_documents: {
+        Row: {
+          candidate_id: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          is_completed: boolean | null
+          notes: string | null
+          stage_document_id: string
+          updated_at: string
+        }
+        Insert: {
+          candidate_id: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          is_completed?: boolean | null
+          notes?: string | null
+          stage_document_id: string
+          updated_at?: string
+        }
+        Update: {
+          candidate_id?: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          is_completed?: boolean | null
+          notes?: string | null
+          stage_document_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidate_documents_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "candidate_documents_stage_document_id_fkey"
+            columns: ["stage_document_id"]
+            isOneToOne: false
+            referencedRelation: "stage_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       candidates: {
         Row: {
           created_at: string
@@ -175,6 +223,36 @@ export type Database = {
           id?: string
           is_approved?: boolean
           updated_at?: string
+        }
+        Relationships: []
+      }
+      stage_documents: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_order: number | null
+          document_name: string
+          id: string
+          is_required: boolean | null
+          stage: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          document_name: string
+          id?: string
+          is_required?: boolean | null
+          stage: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          document_name?: string
+          id?: string
+          is_required?: boolean | null
+          stage?: string
         }
         Relationships: []
       }
