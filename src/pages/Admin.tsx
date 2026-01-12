@@ -23,18 +23,18 @@ export default function Admin() {
   const rejectUser = useRejectUser();
   const deleteUser = useDeleteUser();
 
-  const handleApprove = async (userId: string) => {
+  const handleApprove = async (userId: string, email: string | null) => {
     try {
-      await approveUser.mutateAsync(userId);
+      await approveUser.mutateAsync({ userId, email });
       toast.success("User approved successfully");
     } catch (error) {
       toast.error("Failed to approve user");
     }
   };
 
-  const handleReject = async (userId: string, reason?: string) => {
+  const handleReject = async (userId: string, email: string | null, reason?: string) => {
     try {
-      await rejectUser.mutateAsync({ userId, reason });
+      await rejectUser.mutateAsync({ userId, email, reason });
       toast.success("User rejected");
     } catch (error) {
       toast.error("Failed to reject user");

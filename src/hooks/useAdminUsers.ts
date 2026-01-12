@@ -11,6 +11,21 @@ export interface UserProfile {
   updated_at: string;
 }
 
+async function sendNotificationEmail(email: string, type: "approved" | "rejected", reason?: string) {
+  try {
+    const { data, error } = await supabase.functions.invoke("send-user-notification", {
+      body: { email, type, reason },
+    });
+    
+    if (error) {
+      console.error("Failed to send notification email:", error);
+    }
+    return data;
+  } catch (err) {
+    console.error("Error invoking notification function:", err);
+  }
+}
+
 export function useAllUsers() {
   return useQuery({
     queryKey: ["admin-users"],
@@ -78,7 +93,7 @@ export function useApproveUser() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (userId: string) => {
+    mutationFn: async ({ userId, email }: { userId: string; email: string | null }) => {
       const { error } = await supabase
         .from("profiles")
         .update({ 
@@ -89,6 +104,11 @@ export function useApproveUser() {
         .eq("id", userId);
 
       if (error) throw error;
+
+      // Send notification email
+      if (email) {
+        await sendNotificationEmail(email, "approved");
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
@@ -103,7 +123,7 @@ export function useRejectUser() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ userId, reason }: { userId: string; reason?: string }) => {
+    mutationFn: async ({ userId, email, reason }: { userId: string; email: string | null; reason?: string }) => {
       const { error } = await supabase
         .from("profiles")
         .update({ 
@@ -114,6 +134,11 @@ export function useRejectUser() {
         .eq("id", userId);
 
       if (error) throw error;
+
+      // Send notification email
+      if (email) {
+        await sendNotificationEmail(email, "rejected", reason);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });

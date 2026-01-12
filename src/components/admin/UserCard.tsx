@@ -20,8 +20,8 @@ import type { UserProfile } from "@/hooks/useAdminUsers";
 
 interface UserCardProps {
   user: UserProfile;
-  onApprove?: (userId: string) => void;
-  onReject?: (userId: string, reason?: string) => void;
+  onApprove?: (userId: string, email: string | null) => void;
+  onReject?: (userId: string, email: string | null, reason?: string) => void;
   onDelete?: (userId: string) => void;
   showApprove?: boolean;
   showReject?: boolean;
@@ -87,7 +87,7 @@ export function UserCard({
                 size="sm"
                 variant="default"
                 className="gap-1"
-                onClick={() => onApprove(user.id)}
+                onClick={() => onApprove(user.id, user.email)}
                 disabled={isLoading}
               >
                 <Check className="h-4 w-4" />
@@ -126,7 +126,7 @@ export function UserCard({
                     </AlertDialogCancel>
                     <AlertDialogAction
                       onClick={() => {
-                        onReject(user.id, rejectReason);
+                        onReject(user.id, user.email, rejectReason);
                         setRejectReason("");
                       }}
                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
