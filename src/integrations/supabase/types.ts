@@ -214,6 +214,8 @@ export type Database = {
           email: string | null
           id: string
           is_approved: boolean
+          rejection_reason: string | null
+          status: string | null
           updated_at: string
         }
         Insert: {
@@ -221,6 +223,8 @@ export type Database = {
           email?: string | null
           id: string
           is_approved?: boolean
+          rejection_reason?: string | null
+          status?: string | null
           updated_at?: string
         }
         Update: {
@@ -228,6 +232,8 @@ export type Database = {
           email?: string | null
           id?: string
           is_approved?: boolean
+          rejection_reason?: string | null
+          status?: string | null
           updated_at?: string
         }
         Relationships: []

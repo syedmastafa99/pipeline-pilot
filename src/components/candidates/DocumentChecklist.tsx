@@ -1,10 +1,11 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useCandidateDocuments, useToggleDocument, useUploadDocument, useDeleteDocument, useGetSignedUrl } from "@/hooks/useDocumentChecklist";
+import { DocumentPreviewDialog } from "./DocumentPreviewDialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { FileCheck, FileX, AlertCircle, Upload, Paperclip, Download, Trash2, Loader2 } from "lucide-react";
+import { FileCheck, FileX, AlertCircle, Upload, Paperclip, Download, Trash2, Loader2, Eye } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 
@@ -19,6 +20,14 @@ export function DocumentChecklist({ candidateId, stage }: DocumentChecklistProps
   const uploadDocument = useUploadDocument();
   const deleteDocument = useDeleteDocument();
   const getSignedUrl = useGetSignedUrl();
+  
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewFile, setPreviewFile] = useState<{ path: string; name: string } | null>(null);
+
+  const handlePreview = (filePath: string, fileName: string) => {
+    setPreviewFile({ path: filePath, name: fileName });
+    setPreviewOpen(true);
+  };
 
   const handleToggle = (
     stageDocumentId: string,
@@ -127,11 +136,19 @@ export function DocumentChecklist({ candidateId, stage }: DocumentChecklistProps
             onUpload={handleFileUpload}
             onDownload={handleDownload}
             onDelete={handleDeleteFile}
+            onPreview={handlePreview}
             isUploading={uploadDocument.isPending}
             isDeleting={deleteDocument.isPending}
           />
         ))}
       </div>
+
+      <DocumentPreviewDialog
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+        filePath={previewFile?.path || null}
+        fileName={previewFile?.name || null}
+      />
     </div>
   );
 }
@@ -152,11 +169,12 @@ interface DocumentItemProps {
   onUpload: (stageDocumentId: string, candidateDocumentId: string | null, file: File) => void;
   onDownload: (filePath: string, fileName: string) => void;
   onDelete: (candidateDocumentId: string, filePath: string) => void;
+  onPreview: (filePath: string, fileName: string) => void;
   isUploading: boolean;
   isDeleting: boolean;
 }
 
-function DocumentItem({ doc, onToggle, onUpload, onDownload, onDelete, isUploading, isDeleting }: DocumentItemProps) {
+function DocumentItem({ doc, onToggle, onUpload, onDownload, onDelete, onPreview, isUploading, isDeleting }: DocumentItemProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -214,6 +232,15 @@ function DocumentItem({ doc, onToggle, onUpload, onDownload, onDelete, isUploadi
             <div className="flex items-center gap-2 bg-muted/50 rounded px-2 py-1">
               <Paperclip className="h-3 w-3 text-muted-foreground" />
               <span className="text-xs truncate max-w-[150px]">{doc.file_name}</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-5 w-5"
+                onClick={() => onPreview(doc.file_url!, doc.file_name!)}
+                title="Preview"
+              >
+                <Eye className="h-3 w-3" />
+              </Button>
               <Button
                 variant="ghost"
                 size="icon"
