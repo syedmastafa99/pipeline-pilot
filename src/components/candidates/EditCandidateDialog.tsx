@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
   SelectContent,
@@ -16,8 +17,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Candidate, useUpdateCandidate } from '@/hooks/useCandidates';
 import { STAGES, StageKey } from '@/lib/constants';
+import { Upload, FileImage, User, Briefcase, Phone, Settings } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface EditCandidateDialogProps {
   candidate: Candidate | null;
@@ -25,21 +30,80 @@ interface EditCandidateDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
+interface FormData {
+  full_name: string;
+  passport_number: string;
+  nationality: string;
+  phone: string;
+  email: string;
+  destination_country: string;
+  employer: string;
+  job_title: string;
+  notes: string;
+  current_stage: StageKey;
+  surname: string;
+  given_name: string;
+  date_of_birth: string;
+  sex: string;
+  place_of_birth: string;
+  passport_type: string;
+  country_code: string;
+  personal_number: string;
+  previous_passport_number: string;
+  passport_issue_date: string;
+  passport_expiry_date: string;
+  issuing_authority: string;
+  father_name: string;
+  mother_name: string;
+  legal_guardian_name: string;
+  permanent_address: string;
+  emergency_contact_name: string;
+  emergency_contact_relationship: string;
+  emergency_contact_address: string;
+  emergency_contact_phone: string;
+  passport_scan_url: string;
+}
+
+const initialFormData: FormData = {
+  full_name: '',
+  passport_number: '',
+  nationality: '',
+  phone: '',
+  email: '',
+  destination_country: '',
+  employer: '',
+  job_title: '',
+  notes: '',
+  current_stage: 'passport_received' as StageKey,
+  surname: '',
+  given_name: '',
+  date_of_birth: '',
+  sex: '',
+  place_of_birth: '',
+  passport_type: 'P',
+  country_code: '',
+  personal_number: '',
+  previous_passport_number: '',
+  passport_issue_date: '',
+  passport_expiry_date: '',
+  issuing_authority: '',
+  father_name: '',
+  mother_name: '',
+  legal_guardian_name: '',
+  permanent_address: '',
+  emergency_contact_name: '',
+  emergency_contact_relationship: '',
+  emergency_contact_address: '',
+  emergency_contact_phone: '',
+  passport_scan_url: '',
+};
+
 export function EditCandidateDialog({ candidate, open, onOpenChange }: EditCandidateDialogProps) {
   const updateCandidate = useUpdateCandidate();
-
-  const [formData, setFormData] = useState({
-    full_name: '',
-    passport_number: '',
-    nationality: '',
-    phone: '',
-    email: '',
-    destination_country: '',
-    employer: '',
-    job_title: '',
-    notes: '',
-    current_stage: 'passport_received' as StageKey,
-  });
+  const [formData, setFormData] = useState<FormData>(initialFormData);
+  const [uploading, setUploading] = useState(false);
+  const [passportPreview, setPassportPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (candidate) {
@@ -54,9 +118,51 @@ export function EditCandidateDialog({ candidate, open, onOpenChange }: EditCandi
         job_title: candidate.job_title || '',
         notes: candidate.notes || '',
         current_stage: candidate.current_stage,
+        surname: candidate.surname || '',
+        given_name: candidate.given_name || '',
+        date_of_birth: candidate.date_of_birth || '',
+        sex: candidate.sex || '',
+        place_of_birth: candidate.place_of_birth || '',
+        passport_type: candidate.passport_type || 'P',
+        country_code: candidate.country_code || '',
+        personal_number: candidate.personal_number || '',
+        previous_passport_number: candidate.previous_passport_number || '',
+        passport_issue_date: candidate.passport_issue_date || '',
+        passport_expiry_date: candidate.passport_expiry_date || '',
+        issuing_authority: candidate.issuing_authority || '',
+        father_name: candidate.father_name || '',
+        mother_name: candidate.mother_name || '',
+        legal_guardian_name: candidate.legal_guardian_name || '',
+        permanent_address: candidate.permanent_address || '',
+        emergency_contact_name: candidate.emergency_contact_name || '',
+        emergency_contact_relationship: candidate.emergency_contact_relationship || '',
+        emergency_contact_address: candidate.emergency_contact_address || '',
+        emergency_contact_phone: candidate.emergency_contact_phone || '',
+        passport_scan_url: candidate.passport_scan_url || '',
       });
+      
+      // Load passport preview if exists
+      if (candidate.passport_scan_url) {
+        loadPassportPreview(candidate.passport_scan_url);
+      } else {
+        setPassportPreview(null);
+      }
     }
   }, [candidate]);
+
+  const loadPassportPreview = async (filePath: string) => {
+    try {
+      const { data } = await supabase.storage
+        .from('candidate-documents')
+        .createSignedUrl(filePath, 300);
+      
+      if (data?.signedUrl) {
+        setPassportPreview(data.signedUrl);
+      }
+    } catch (error) {
+      console.error('Error loading passport preview:', error);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,136 +177,498 @@ export function EditCandidateDialog({ candidate, open, onOpenChange }: EditCandi
     onOpenChange(false);
   };
 
-  const handleChange = (field: string, value: string) => {
+  const handleChange = (field: keyof FormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
+      toast.error('Please upload an image or PDF file');
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('File size must be less than 10MB');
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/passport-scans/${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('candidate-documents')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      setFormData(prev => ({ ...prev, passport_scan_url: fileName }));
+      
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setPassportPreview(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        setPassportPreview(null);
+      }
+
+      toast.success('Passport scan uploaded successfully');
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error('Failed to upload passport scan');
+    } finally {
+      setUploading(false);
+    }
   };
 
   if (!candidate) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh]">
         <DialogHeader>
           <DialogTitle className="font-display text-xl">Edit Candidate</DialogTitle>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="edit_full_name">Full Name *</Label>
-              <Input
-                id="edit_full_name"
-                value={formData.full_name}
-                onChange={(e) => handleChange('full_name', e.target.value)}
-                placeholder="John Doe"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit_passport_number">Passport Number</Label>
-              <Input
-                id="edit_passport_number"
-                value={formData.passport_number}
-                onChange={(e) => handleChange('passport_number', e.target.value)}
-                placeholder="AB1234567"
-              />
-            </div>
-          </div>
+        <form onSubmit={handleSubmit}>
+          <Tabs defaultValue="passport" className="w-full">
+            <TabsList className="grid w-full grid-cols-5">
+              <TabsTrigger value="passport" className="text-xs">
+                <FileImage className="h-4 w-4 mr-1 hidden sm:inline" />
+                Passport
+              </TabsTrigger>
+              <TabsTrigger value="personal" className="text-xs">
+                <User className="h-4 w-4 mr-1 hidden sm:inline" />
+                Personal
+              </TabsTrigger>
+              <TabsTrigger value="employment" className="text-xs">
+                <Briefcase className="h-4 w-4 mr-1 hidden sm:inline" />
+                Employment
+              </TabsTrigger>
+              <TabsTrigger value="emergency" className="text-xs">
+                <Phone className="h-4 w-4 mr-1 hidden sm:inline" />
+                Emergency
+              </TabsTrigger>
+              <TabsTrigger value="status" className="text-xs">
+                <Settings className="h-4 w-4 mr-1 hidden sm:inline" />
+                Status
+              </TabsTrigger>
+            </TabsList>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="edit_nationality">Nationality</Label>
-              <Input
-                id="edit_nationality"
-                value={formData.nationality}
-                onChange={(e) => handleChange('nationality', e.target.value)}
-                placeholder="Pakistani"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit_phone">Phone</Label>
-              <Input
-                id="edit_phone"
-                value={formData.phone}
-                onChange={(e) => handleChange('phone', e.target.value)}
-                placeholder="+92 300 1234567"
-              />
-            </div>
-          </div>
+            <ScrollArea className="h-[50vh] mt-4 pr-4">
+              {/* Passport Info Tab */}
+              <TabsContent value="passport" className="space-y-4 mt-0">
+                {/* Passport Scan Upload */}
+                <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4 text-center">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*,.pdf"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                  {passportPreview ? (
+                    <div className="space-y-3">
+                      <img 
+                        src={passportPreview} 
+                        alt="Passport preview" 
+                        className="max-h-40 mx-auto rounded-md object-contain"
+                      />
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploading}
+                      >
+                        Change Passport Scan
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="flex justify-center">
+                        <Upload className="h-10 w-10 text-muted-foreground" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">Upload Passport Scan</p>
+                        <p className="text-xs text-muted-foreground">
+                          Image or PDF, max 10MB
+                        </p>
+                      </div>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploading}
+                      >
+                        {uploading ? 'Uploading...' : 'Select File'}
+                      </Button>
+                    </div>
+                  )}
+                </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="edit_email">Email</Label>
-            <Input
-              id="edit_email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => handleChange('email', e.target.value)}
-              placeholder="john@example.com"
-            />
-          </div>
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_passport_type">Passport Type</Label>
+                    <Select 
+                      value={formData.passport_type || 'P'} 
+                      onValueChange={(value) => handleChange('passport_type', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="P">P (Passport)</SelectItem>
+                        <SelectItem value="D">D (Diplomatic)</SelectItem>
+                        <SelectItem value="S">S (Service)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_country_code">Country Code</Label>
+                    <Input
+                      id="edit_country_code"
+                      value={formData.country_code}
+                      onChange={(e) => handleChange('country_code', e.target.value.toUpperCase())}
+                      placeholder="BGD"
+                      maxLength={3}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_passport_number">Passport Number</Label>
+                    <Input
+                      id="edit_passport_number"
+                      value={formData.passport_number}
+                      onChange={(e) => handleChange('passport_number', e.target.value.toUpperCase())}
+                      placeholder="A19677982"
+                    />
+                  </div>
+                </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="edit_destination_country">Destination Country</Label>
-              <Input
-                id="edit_destination_country"
-                value={formData.destination_country}
-                onChange={(e) => handleChange('destination_country', e.target.value)}
-                placeholder="Saudi Arabia"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit_employer">Employer</Label>
-              <Input
-                id="edit_employer"
-                value={formData.employer}
-                onChange={(e) => handleChange('employer', e.target.value)}
-                placeholder="Company Name"
-              />
-            </div>
-          </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_surname">Surname</Label>
+                    <Input
+                      id="edit_surname"
+                      value={formData.surname}
+                      onChange={(e) => handleChange('surname', e.target.value.toUpperCase())}
+                      placeholder="MIAH"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_given_name">Given Name</Label>
+                    <Input
+                      id="edit_given_name"
+                      value={formData.given_name}
+                      onChange={(e) => handleChange('given_name', e.target.value.toUpperCase())}
+                      placeholder="TAMIM"
+                    />
+                  </div>
+                </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="edit_job_title">Job Title</Label>
-            <Input
-              id="edit_job_title"
-              value={formData.job_title}
-              onChange={(e) => handleChange('job_title', e.target.value)}
-              placeholder="Driver, Mason, etc."
-            />
-          </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_full_name">Full Name *</Label>
+                    <Input
+                      id="edit_full_name"
+                      value={formData.full_name}
+                      onChange={(e) => handleChange('full_name', e.target.value)}
+                      placeholder="TAMIM MIAH"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_nationality">Nationality</Label>
+                    <Input
+                      id="edit_nationality"
+                      value={formData.nationality}
+                      onChange={(e) => handleChange('nationality', e.target.value.toUpperCase())}
+                      placeholder="BANGLADESHI"
+                    />
+                  </div>
+                </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="edit_stage">Current Stage</Label>
-            <Select 
-              value={formData.current_stage} 
-              onValueChange={(value) => handleChange('current_stage', value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select stage" />
-              </SelectTrigger>
-              <SelectContent>
-                {STAGES.map((stage) => (
-                  <SelectItem key={stage.key} value={stage.key}>
-                    {stage.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_date_of_birth">Date of Birth</Label>
+                    <Input
+                      id="edit_date_of_birth"
+                      type="date"
+                      value={formData.date_of_birth}
+                      onChange={(e) => handleChange('date_of_birth', e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_sex">Sex</Label>
+                    <Select 
+                      value={formData.sex || ''} 
+                      onValueChange={(value) => handleChange('sex', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="M">Male</SelectItem>
+                        <SelectItem value="F">Female</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_place_of_birth">Place of Birth</Label>
+                    <Input
+                      id="edit_place_of_birth"
+                      value={formData.place_of_birth}
+                      onChange={(e) => handleChange('place_of_birth', e.target.value.toUpperCase())}
+                      placeholder="BRAHMANBARIA"
+                    />
+                  </div>
+                </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="edit_notes">Notes</Label>
-            <Textarea
-              id="edit_notes"
-              value={formData.notes}
-              onChange={(e) => handleChange('notes', e.target.value)}
-              placeholder="Additional notes..."
-              rows={3}
-            />
-          </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_personal_number">Personal No.</Label>
+                    <Input
+                      id="edit_personal_number"
+                      value={formData.personal_number}
+                      onChange={(e) => handleChange('personal_number', e.target.value)}
+                      placeholder="8732309573"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_previous_passport_number">Previous Passport No.</Label>
+                    <Input
+                      id="edit_previous_passport_number"
+                      value={formData.previous_passport_number}
+                      onChange={(e) => handleChange('previous_passport_number', e.target.value.toUpperCase())}
+                      placeholder="738977"
+                    />
+                  </div>
+                </div>
 
-          <div className="flex justify-end gap-3 pt-4">
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_passport_issue_date">Date of Issue</Label>
+                    <Input
+                      id="edit_passport_issue_date"
+                      type="date"
+                      value={formData.passport_issue_date}
+                      onChange={(e) => handleChange('passport_issue_date', e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_passport_expiry_date">Date of Expiry</Label>
+                    <Input
+                      id="edit_passport_expiry_date"
+                      type="date"
+                      value={formData.passport_expiry_date}
+                      onChange={(e) => handleChange('passport_expiry_date', e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_issuing_authority">Issuing Authority</Label>
+                    <Input
+                      id="edit_issuing_authority"
+                      value={formData.issuing_authority}
+                      onChange={(e) => handleChange('issuing_authority', e.target.value.toUpperCase())}
+                      placeholder="DIP/DHAKA"
+                    />
+                  </div>
+                </div>
+              </TabsContent>
+
+              {/* Personal Data Tab */}
+              <TabsContent value="personal" className="space-y-4 mt-0">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_father_name">Father's Name</Label>
+                    <Input
+                      id="edit_father_name"
+                      value={formData.father_name}
+                      onChange={(e) => handleChange('father_name', e.target.value.toUpperCase())}
+                      placeholder="MD JOYNAL ABDDIN"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_mother_name">Mother's Name</Label>
+                    <Input
+                      id="edit_mother_name"
+                      value={formData.mother_name}
+                      onChange={(e) => handleChange('mother_name', e.target.value.toUpperCase())}
+                      placeholder="SABINA YESMIN"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit_legal_guardian_name">Legal Guardian's Name</Label>
+                  <Input
+                    id="edit_legal_guardian_name"
+                    value={formData.legal_guardian_name}
+                    onChange={(e) => handleChange('legal_guardian_name', e.target.value.toUpperCase())}
+                    placeholder="If applicable"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit_permanent_address">Permanent Address</Label>
+                  <Textarea
+                    id="edit_permanent_address"
+                    value={formData.permanent_address}
+                    onChange={(e) => handleChange('permanent_address', e.target.value)}
+                    placeholder="NASIRABAD, NABINAGAR, NASIRABAD - 3413, BRAHMANBARIA"
+                    rows={2}
+                  />
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_phone">Phone</Label>
+                    <Input
+                      id="edit_phone"
+                      value={formData.phone}
+                      onChange={(e) => handleChange('phone', e.target.value)}
+                      placeholder="+8801707869351"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_email">Email</Label>
+                    <Input
+                      id="edit_email"
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => handleChange('email', e.target.value)}
+                      placeholder="email@example.com"
+                    />
+                  </div>
+                </div>
+              </TabsContent>
+
+              {/* Employment Tab */}
+              <TabsContent value="employment" className="space-y-4 mt-0">
+                <div className="space-y-2">
+                  <Label htmlFor="edit_destination_country">Destination Country</Label>
+                  <Input
+                    id="edit_destination_country"
+                    value={formData.destination_country}
+                    onChange={(e) => handleChange('destination_country', e.target.value)}
+                    placeholder="Saudi Arabia"
+                  />
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_employer">Employer</Label>
+                    <Input
+                      id="edit_employer"
+                      value={formData.employer}
+                      onChange={(e) => handleChange('employer', e.target.value)}
+                      placeholder="Company Name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_job_title">Job Title</Label>
+                    <Input
+                      id="edit_job_title"
+                      value={formData.job_title}
+                      onChange={(e) => handleChange('job_title', e.target.value)}
+                      placeholder="Driver, Mason, etc."
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit_notes">Notes</Label>
+                  <Textarea
+                    id="edit_notes"
+                    value={formData.notes}
+                    onChange={(e) => handleChange('notes', e.target.value)}
+                    placeholder="Additional notes..."
+                    rows={3}
+                  />
+                </div>
+              </TabsContent>
+
+              {/* Emergency Contact Tab */}
+              <TabsContent value="emergency" className="space-y-4 mt-0">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_emergency_contact_name">Contact Name</Label>
+                    <Input
+                      id="edit_emergency_contact_name"
+                      value={formData.emergency_contact_name}
+                      onChange={(e) => handleChange('emergency_contact_name', e.target.value.toUpperCase())}
+                      placeholder="MD JOYNAL ABDDIN"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_emergency_contact_relationship">Relationship</Label>
+                    <Input
+                      id="edit_emergency_contact_relationship"
+                      value={formData.emergency_contact_relationship}
+                      onChange={(e) => handleChange('emergency_contact_relationship', e.target.value.toUpperCase())}
+                      placeholder="FATHER"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit_emergency_contact_address">Contact Address</Label>
+                  <Textarea
+                    id="edit_emergency_contact_address"
+                    value={formData.emergency_contact_address}
+                    onChange={(e) => handleChange('emergency_contact_address', e.target.value)}
+                    placeholder="NASIRABAD, NABINAGAR, NASIRABAD - 3413, BRAHMANBARIA"
+                    rows={2}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit_emergency_contact_phone">Contact Phone</Label>
+                  <Input
+                    id="edit_emergency_contact_phone"
+                    value={formData.emergency_contact_phone}
+                    onChange={(e) => handleChange('emergency_contact_phone', e.target.value)}
+                    placeholder="+8801707869351"
+                  />
+                </div>
+              </TabsContent>
+
+              {/* Status Tab */}
+              <TabsContent value="status" className="space-y-4 mt-0">
+                <div className="space-y-2">
+                  <Label htmlFor="edit_stage">Current Stage</Label>
+                  <Select 
+                    value={formData.current_stage} 
+                    onValueChange={(value) => handleChange('current_stage', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select stage" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {STAGES.map((stage) => (
+                        <SelectItem key={stage.key} value={stage.key}>
+                          {stage.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </TabsContent>
+            </ScrollArea>
+          </Tabs>
+
+          <div className="flex justify-end gap-3 pt-4 border-t mt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
