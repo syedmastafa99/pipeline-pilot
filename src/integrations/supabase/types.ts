@@ -120,50 +120,113 @@ export type Database = {
       }
       candidates: {
         Row: {
+          country_code: string | null
           created_at: string
           current_stage: Database["public"]["Enums"]["candidate_stage"]
+          date_of_birth: string | null
           destination_country: string | null
           email: string | null
+          emergency_contact_address: string | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          emergency_contact_relationship: string | null
           employer: string | null
+          father_name: string | null
           full_name: string
+          given_name: string | null
           id: string
+          issuing_authority: string | null
           job_title: string | null
+          legal_guardian_name: string | null
+          mother_name: string | null
           nationality: string | null
           notes: string | null
+          passport_expiry_date: string | null
+          passport_issue_date: string | null
           passport_number: string | null
+          passport_scan_url: string | null
+          passport_type: string | null
+          permanent_address: string | null
+          personal_number: string | null
           phone: string | null
+          place_of_birth: string | null
+          previous_passport_number: string | null
+          sex: string | null
+          surname: string | null
           updated_at: string
           user_id: string | null
         }
         Insert: {
+          country_code?: string | null
           created_at?: string
           current_stage?: Database["public"]["Enums"]["candidate_stage"]
+          date_of_birth?: string | null
           destination_country?: string | null
           email?: string | null
+          emergency_contact_address?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          emergency_contact_relationship?: string | null
           employer?: string | null
+          father_name?: string | null
           full_name: string
+          given_name?: string | null
           id?: string
+          issuing_authority?: string | null
           job_title?: string | null
+          legal_guardian_name?: string | null
+          mother_name?: string | null
           nationality?: string | null
           notes?: string | null
+          passport_expiry_date?: string | null
+          passport_issue_date?: string | null
           passport_number?: string | null
+          passport_scan_url?: string | null
+          passport_type?: string | null
+          permanent_address?: string | null
+          personal_number?: string | null
           phone?: string | null
+          place_of_birth?: string | null
+          previous_passport_number?: string | null
+          sex?: string | null
+          surname?: string | null
           updated_at?: string
           user_id?: string | null
         }
         Update: {
+          country_code?: string | null
           created_at?: string
           current_stage?: Database["public"]["Enums"]["candidate_stage"]
+          date_of_birth?: string | null
           destination_country?: string | null
           email?: string | null
+          emergency_contact_address?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          emergency_contact_relationship?: string | null
           employer?: string | null
+          father_name?: string | null
           full_name?: string
+          given_name?: string | null
           id?: string
+          issuing_authority?: string | null
           job_title?: string | null
+          legal_guardian_name?: string | null
+          mother_name?: string | null
           nationality?: string | null
           notes?: string | null
+          passport_expiry_date?: string | null
+          passport_issue_date?: string | null
           passport_number?: string | null
+          passport_scan_url?: string | null
+          passport_type?: string | null
+          permanent_address?: string | null
+          personal_number?: string | null
           phone?: string | null
+          place_of_birth?: string | null
+          previous_passport_number?: string | null
+          sex?: string | null
+          surname?: string | null
           updated_at?: string
           user_id?: string | null
         }

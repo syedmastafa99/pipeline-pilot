@@ -1,0 +1,23 @@
+-- Add comprehensive passport fields to candidates table
+ALTER TABLE public.candidates
+ADD COLUMN IF NOT EXISTS surname text,
+ADD COLUMN IF NOT EXISTS given_name text,
+ADD COLUMN IF NOT EXISTS date_of_birth date,
+ADD COLUMN IF NOT EXISTS sex text,
+ADD COLUMN IF NOT EXISTS place_of_birth text,
+ADD COLUMN IF NOT EXISTS passport_type text,
+ADD COLUMN IF NOT EXISTS country_code text,
+ADD COLUMN IF NOT EXISTS personal_number text,
+ADD COLUMN IF NOT EXISTS previous_passport_number text,
+ADD COLUMN IF NOT EXISTS passport_issue_date date,
+ADD COLUMN IF NOT EXISTS passport_expiry_date date,
+ADD COLUMN IF NOT EXISTS issuing_authority text,
+ADD COLUMN IF NOT EXISTS father_name text,
+ADD COLUMN IF NOT EXISTS mother_name text,
+ADD COLUMN IF NOT EXISTS legal_guardian_name text,
+ADD COLUMN IF NOT EXISTS permanent_address text,
+ADD COLUMN IF NOT EXISTS emergency_contact_name text,
+ADD COLUMN IF NOT EXISTS emergency_contact_relationship text,
+ADD COLUMN IF NOT EXISTS emergency_contact_address text,
+ADD COLUMN IF NOT EXISTS emergency_contact_phone text,
+ADD COLUMN IF NOT EXISTS passport_scan_url text;

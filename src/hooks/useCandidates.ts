@@ -18,6 +18,28 @@ export interface Candidate {
   created_at: string;
   updated_at: string;
   user_id: string | null;
+  // Passport fields
+  surname: string | null;
+  given_name: string | null;
+  date_of_birth: string | null;
+  sex: string | null;
+  place_of_birth: string | null;
+  passport_type: string | null;
+  country_code: string | null;
+  personal_number: string | null;
+  previous_passport_number: string | null;
+  passport_issue_date: string | null;
+  passport_expiry_date: string | null;
+  issuing_authority: string | null;
+  father_name: string | null;
+  mother_name: string | null;
+  legal_guardian_name: string | null;
+  permanent_address: string | null;
+  emergency_contact_name: string | null;
+  emergency_contact_relationship: string | null;
+  emergency_contact_address: string | null;
+  emergency_contact_phone: string | null;
+  passport_scan_url: string | null;
 }
 
 export interface CreateCandidateInput {
@@ -30,6 +52,28 @@ export interface CreateCandidateInput {
   employer?: string;
   job_title?: string;
   notes?: string;
+  // Passport fields
+  surname?: string;
+  given_name?: string;
+  date_of_birth?: string;
+  sex?: string;
+  place_of_birth?: string;
+  passport_type?: string;
+  country_code?: string;
+  personal_number?: string;
+  previous_passport_number?: string;
+  passport_issue_date?: string;
+  passport_expiry_date?: string;
+  issuing_authority?: string;
+  father_name?: string;
+  mother_name?: string;
+  legal_guardian_name?: string;
+  permanent_address?: string;
+  emergency_contact_name?: string;
+  emergency_contact_relationship?: string;
+  emergency_contact_address?: string;
+  emergency_contact_phone?: string;
+  passport_scan_url?: string;
 }
 
 export interface StageHistory {
