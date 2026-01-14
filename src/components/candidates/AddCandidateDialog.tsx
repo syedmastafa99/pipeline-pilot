@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCreateCandidate, CreateCandidateInput } from '@/hooks/useCandidates';
-import { Plus, Upload, FileImage, User, Briefcase, Phone, AlertCircle } from 'lucide-react';
+import { Plus, Upload, FileImage, User, Briefcase, Phone, AlertCircle, Loader2, Sparkles } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -56,10 +56,35 @@ const initialFormData: CreateCandidateInput = {
   passport_scan_url: '',
 };
 
+interface ExtractedPassportData {
+  passport_type?: string;
+  country_code?: string;
+  passport_number?: string;
+  surname?: string;
+  given_name?: string;
+  nationality?: string;
+  date_of_birth?: string;
+  sex?: string;
+  place_of_birth?: string;
+  personal_number?: string;
+  previous_passport_number?: string;
+  passport_issue_date?: string;
+  passport_expiry_date?: string;
+  issuing_authority?: string;
+  father_name?: string;
+  mother_name?: string;
+  permanent_address?: string;
+  emergency_contact_name?: string;
+  emergency_contact_relationship?: string;
+  emergency_contact_address?: string;
+  emergency_contact_phone?: string;
+}
+
 export function AddCandidateDialog({ trigger }: AddCandidateDialogProps) {
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState<CreateCandidateInput>(initialFormData);
   const [uploading, setUploading] = useState(false);
+  const [extracting, setExtracting] = useState(false);
   const [passportPreview, setPassportPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const createCandidate = useCreateCandidate();
@@ -90,13 +115,77 @@ export function AddCandidateDialog({ trigger }: AddCandidateDialogProps) {
     }
   };
 
+  const applyExtractedData = (data: ExtractedPassportData) => {
+    const updates: Partial<CreateCandidateInput> = {};
+    
+    if (data.passport_type) updates.passport_type = data.passport_type;
+    if (data.country_code) updates.country_code = data.country_code;
+    if (data.passport_number) updates.passport_number = data.passport_number;
+    if (data.surname) updates.surname = data.surname;
+    if (data.given_name) updates.given_name = data.given_name;
+    if (data.nationality) updates.nationality = data.nationality;
+    if (data.date_of_birth) updates.date_of_birth = data.date_of_birth;
+    if (data.sex) updates.sex = data.sex;
+    if (data.place_of_birth) updates.place_of_birth = data.place_of_birth;
+    if (data.personal_number) updates.personal_number = data.personal_number;
+    if (data.previous_passport_number) updates.previous_passport_number = data.previous_passport_number;
+    if (data.passport_issue_date) updates.passport_issue_date = data.passport_issue_date;
+    if (data.passport_expiry_date) updates.passport_expiry_date = data.passport_expiry_date;
+    if (data.issuing_authority) updates.issuing_authority = data.issuing_authority;
+    if (data.father_name) updates.father_name = data.father_name;
+    if (data.mother_name) updates.mother_name = data.mother_name;
+    if (data.permanent_address) updates.permanent_address = data.permanent_address;
+    if (data.emergency_contact_name) updates.emergency_contact_name = data.emergency_contact_name;
+    if (data.emergency_contact_relationship) updates.emergency_contact_relationship = data.emergency_contact_relationship;
+    if (data.emergency_contact_address) updates.emergency_contact_address = data.emergency_contact_address;
+    if (data.emergency_contact_phone) updates.emergency_contact_phone = data.emergency_contact_phone;
+    
+    // Auto-fill full_name from extracted names
+    if (data.given_name || data.surname) {
+      updates.full_name = `${data.given_name || ''} ${data.surname || ''}`.trim();
+    }
+    
+    setFormData(prev => ({ ...prev, ...updates }));
+  };
+
+  const extractPassportData = async (imageBase64: string, mimeType: string) => {
+    setExtracting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('passport-ocr', {
+        body: { imageBase64, mimeType }
+      });
+
+      if (error) throw error;
+
+      if (data?.success && data?.data) {
+        applyExtractedData(data.data);
+        toast.success('Passport data extracted successfully! Please verify the information.');
+      } else if (data?.message) {
+        toast.info(data.message);
+      } else {
+        toast.error('Could not extract passport data. Please enter manually.');
+      }
+    } catch (error) {
+      console.error('OCR error:', error);
+      if (error instanceof Error && error.message.includes('429')) {
+        toast.error('Rate limit exceeded. Please try again later.');
+      } else if (error instanceof Error && error.message.includes('402')) {
+        toast.error('AI credits exhausted. Please add credits to continue.');
+      } else {
+        toast.error('Failed to extract passport data. Please enter manually.');
+      }
+    } finally {
+      setExtracting(false);
+    }
+  };
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
-    if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
-      toast.error('Please upload an image or PDF file');
+    // Validate file type - only images for OCR
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload an image file for OCR extraction');
       return;
     }
 
@@ -112,39 +201,41 @@ export function AddCandidateDialog({ trigger }: AddCandidateDialogProps) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Create a unique file path
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}/passport-scans/${Date.now()}.${fileExt}`;
+      // Read file as base64 for OCR
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64Data = reader.result as string;
+        setPassportPreview(base64Data);
+        
+        // Extract base64 content (remove data URL prefix)
+        const base64Content = base64Data.split(',')[1];
+        
+        // Upload to storage
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${user.id}/passport-scans/${Date.now()}.${fileExt}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from('candidate-documents')
-        .upload(fileName, file);
+        const { error: uploadError } = await supabase.storage
+          .from('candidate-documents')
+          .upload(fileName, file);
 
-      if (uploadError) throw uploadError;
+        if (uploadError) {
+          console.error('Upload error:', uploadError);
+          toast.error('Failed to upload passport scan');
+          setUploading(false);
+          return;
+        }
 
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('candidate-documents')
-        .getPublicUrl(fileName);
-
-      setFormData(prev => ({ ...prev, passport_scan_url: fileName }));
-      
-      // Set preview for images
-      if (file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setPassportPreview(reader.result as string);
-        };
-        reader.readAsDataURL(file);
-      } else {
-        setPassportPreview(null);
-      }
-
-      toast.success('Passport scan uploaded successfully');
+        setFormData(prev => ({ ...prev, passport_scan_url: fileName }));
+        toast.success('Passport scan uploaded! Extracting data...');
+        setUploading(false);
+        
+        // Run OCR extraction
+        await extractPassportData(base64Content, file.type);
+      };
+      reader.readAsDataURL(file);
     } catch (error) {
       console.error('Upload error:', error);
       toast.error('Failed to upload passport scan');
-    } finally {
       setUploading(false);
     }
   };
@@ -189,14 +280,22 @@ export function AddCandidateDialog({ trigger }: AddCandidateDialogProps) {
               {/* Passport Info Tab */}
               <TabsContent value="passport" className="space-y-4 mt-0">
                 {/* Passport Scan Upload */}
-                <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4 text-center">
+                <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4 text-center relative">
                   <input
                     ref={fileInputRef}
                     type="file"
-                    accept="image/*,.pdf"
+                    accept="image/*"
                     onChange={handleFileUpload}
                     className="hidden"
                   />
+                  {extracting && (
+                    <div className="absolute inset-0 bg-background/80 flex items-center justify-center rounded-lg z-10">
+                      <div className="flex flex-col items-center gap-2">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                        <span className="text-sm font-medium">Extracting passport data...</span>
+                      </div>
+                    </div>
+                  )}
                   {passportPreview ? (
                     <div className="space-y-3">
                       <img 
@@ -204,15 +303,30 @@ export function AddCandidateDialog({ trigger }: AddCandidateDialogProps) {
                         alt="Passport preview" 
                         className="max-h-40 mx-auto rounded-md object-contain"
                       />
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={uploading}
-                      >
-                        Change Passport Scan
-                      </Button>
+                      <div className="flex justify-center gap-2">
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={uploading || extracting}
+                        >
+                          Change Scan
+                        </Button>
+                        <Button 
+                          type="button" 
+                          variant="secondary" 
+                          size="sm"
+                          onClick={() => {
+                            const base64Content = passportPreview.split(',')[1];
+                            extractPassportData(base64Content, 'image/jpeg');
+                          }}
+                          disabled={uploading || extracting}
+                        >
+                          <Sparkles className="h-4 w-4 mr-1" />
+                          Re-extract Data
+                        </Button>
+                      </div>
                     </div>
                   ) : (
                     <div className="space-y-3">
@@ -222,7 +336,7 @@ export function AddCandidateDialog({ trigger }: AddCandidateDialogProps) {
                       <div>
                         <p className="text-sm font-medium">Upload Passport Scan</p>
                         <p className="text-xs text-muted-foreground">
-                          Drag and drop or click to upload (Image or PDF, max 10MB)
+                          Upload an image to auto-extract passport data using AI
                         </p>
                       </div>
                       <Button 
@@ -230,17 +344,27 @@ export function AddCandidateDialog({ trigger }: AddCandidateDialogProps) {
                         variant="outline" 
                         size="sm"
                         onClick={() => fileInputRef.current?.click()}
-                        disabled={uploading}
+                        disabled={uploading || extracting}
                       >
-                        {uploading ? 'Uploading...' : 'Select File'}
+                        {uploading ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                            Uploading...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="h-4 w-4 mr-1" />
+                            Select & Extract
+                          </>
+                        )}
                       </Button>
                     </div>
                   )}
                 </div>
 
-                <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted p-2 rounded">
-                  <AlertCircle className="h-4 w-4" />
-                  <span>Fill in the passport details from the scanned document below</span>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 p-2 rounded border border-muted">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  <span>AI will automatically extract passport data. Verify and correct any information below.</span>
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-3">
