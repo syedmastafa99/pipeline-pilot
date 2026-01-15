@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import Pipeline from "./pages/Pipeline";
 import Tasks from "./pages/Tasks";
 import Reports from "./pages/Reports";
+import BioData from "./pages/BioData";
 import Upload from "./pages/Upload";
 import Settings from "./pages/Settings";
 import Admin from "./pages/Admin";
@@ -31,6 +32,7 @@ const App = () => (
           <Route path="/pipeline" element={<ProtectedRoute><Pipeline /></ProtectedRoute>} />
           <Route path="/tasks" element={<ProtectedRoute><Tasks /></ProtectedRoute>} />
           <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+          <Route path="/biodata" element={<ProtectedRoute><BioData /></ProtectedRoute>} />
           <Route path="/upload" element={<ProtectedRoute><Upload /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
