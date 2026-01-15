@@ -8,6 +8,7 @@ import {
   Plane,
   LogOut,
   ShieldCheck,
+  UserSquare2,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import {
@@ -34,6 +35,7 @@ const mainNavItems = [
   { title: 'Pipeline', url: '/pipeline', icon: Users },
   { title: 'Tasks', url: '/tasks', icon: ClipboardList },
   { title: 'Reports', url: '/reports', icon: FileBarChart },
+  { title: 'Bio Data', url: '/biodata', icon: UserSquare2 },
   { title: 'Bulk Upload', url: '/upload', icon: Upload },
 ];
 
