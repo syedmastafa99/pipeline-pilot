@@ -9,6 +9,7 @@ import {
   LogOut,
   ShieldCheck,
   UserSquare2,
+  CalendarClock,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import {
@@ -36,6 +37,7 @@ const mainNavItems = [
   { title: 'Tasks', url: '/tasks', icon: ClipboardList },
   { title: 'Reports', url: '/reports', icon: FileBarChart },
   { title: 'Bio Data', url: '/biodata', icon: UserSquare2 },
+  { title: 'Visa Expiry', url: '/visa-expiry', icon: CalendarClock },
   { title: 'Bulk Upload', url: '/upload', icon: Upload },
 ];
 
