@@ -155,6 +155,8 @@ export type Database = {
           surname: string | null
           updated_at: string
           user_id: string | null
+          visa_expiry_date: string | null
+          visa_issue_date: string | null
         }
         Insert: {
           country_code?: string | null
@@ -192,6 +194,8 @@ export type Database = {
           surname?: string | null
           updated_at?: string
           user_id?: string | null
+          visa_expiry_date?: string | null
+          visa_issue_date?: string | null
         }
         Update: {
           country_code?: string | null
@@ -229,6 +233,8 @@ export type Database = {
           surname?: string | null
           updated_at?: string
           user_id?: string | null
+          visa_expiry_date?: string | null
+          visa_issue_date?: string | null
         }
         Relationships: []
       }

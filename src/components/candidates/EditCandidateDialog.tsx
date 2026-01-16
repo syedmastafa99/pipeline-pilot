@@ -62,6 +62,8 @@ interface FormData {
   emergency_contact_address: string;
   emergency_contact_phone: string;
   passport_scan_url: string;
+  visa_issue_date: string;
+  visa_expiry_date: string;
 }
 
 const initialFormData: FormData = {
@@ -96,6 +98,8 @@ const initialFormData: FormData = {
   emergency_contact_address: '',
   emergency_contact_phone: '',
   passport_scan_url: '',
+  visa_issue_date: '',
+  visa_expiry_date: '',
 };
 
 export function EditCandidateDialog({ candidate, open, onOpenChange }: EditCandidateDialogProps) {
@@ -139,6 +143,8 @@ export function EditCandidateDialog({ candidate, open, onOpenChange }: EditCandi
         emergency_contact_address: candidate.emergency_contact_address || '',
         emergency_contact_phone: candidate.emergency_contact_phone || '',
         passport_scan_url: candidate.passport_scan_url || '',
+        visa_issue_date: candidate.visa_issue_date || '',
+        visa_expiry_date: candidate.visa_expiry_date || '',
       });
       
       // Load passport preview if exists
@@ -663,6 +669,30 @@ export function EditCandidateDialog({ candidate, open, onOpenChange }: EditCandi
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+
+                <div className="pt-4 border-t">
+                  <h4 className="text-sm font-medium mb-4">Visa Information</h4>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="edit_visa_issue_date">Visa Issue Date</Label>
+                      <Input
+                        id="edit_visa_issue_date"
+                        type="date"
+                        value={formData.visa_issue_date}
+                        onChange={(e) => handleChange('visa_issue_date', e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit_visa_expiry_date">Visa Expiry Date</Label>
+                      <Input
+                        id="edit_visa_expiry_date"
+                        type="date"
+                        value={formData.visa_expiry_date}
+                        onChange={(e) => handleChange('visa_expiry_date', e.target.value)}
+                      />
+                    </div>
+                  </div>
                 </div>
               </TabsContent>
             </ScrollArea>

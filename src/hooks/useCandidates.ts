@@ -40,6 +40,9 @@ export interface Candidate {
   emergency_contact_address: string | null;
   emergency_contact_phone: string | null;
   passport_scan_url: string | null;
+  // Visa fields
+  visa_issue_date: string | null;
+  visa_expiry_date: string | null;
 }
 
 export interface CreateCandidateInput {
@@ -74,6 +77,9 @@ export interface CreateCandidateInput {
   emergency_contact_address?: string;
   emergency_contact_phone?: string;
   passport_scan_url?: string;
+  // Visa fields
+  visa_issue_date?: string;
+  visa_expiry_date?: string;
 }
 
 export interface StageHistory {

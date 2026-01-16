@@ -10,7 +10,8 @@ interface ExpiringCandidate {
   id: string;
   full_name: string;
   passport_number: string | null;
-  passport_expiry_date: string;
+  visa_issue_date: string | null;
+  visa_expiry_date: string;
   daysLeft: number;
 }
 
@@ -25,19 +26,20 @@ export default function VisaExpiry() {
 
     const expiring: ExpiringCandidate[] = candidates
       .filter((candidate) => {
-        if (!candidate.passport_expiry_date) return false;
-        const expiryDate = parseISO(candidate.passport_expiry_date);
+        if (!candidate.visa_expiry_date) return false;
+        const expiryDate = parseISO(candidate.visa_expiry_date);
         const daysLeft = differenceInDays(expiryDate, today);
         return daysLeft >= 0 && daysLeft <= 15;
       })
       .map((candidate) => {
-        const expiryDate = parseISO(candidate.passport_expiry_date!);
+        const expiryDate = parseISO(candidate.visa_expiry_date!);
         const daysLeft = differenceInDays(expiryDate, today);
         return {
           id: candidate.id,
           full_name: candidate.full_name,
           passport_number: candidate.passport_number,
-          passport_expiry_date: candidate.passport_expiry_date!,
+          visa_issue_date: candidate.visa_issue_date,
+          visa_expiry_date: candidate.visa_expiry_date!,
           daysLeft,
         };
       })
@@ -118,9 +120,15 @@ export default function VisaExpiry() {
                                 {candidate.passport_number}
                               </span>
                             )}
+                            {candidate.visa_issue_date && (
+                              <span className="flex items-center gap-1">
+                                <Calendar className="h-3.5 w-3.5" />
+                                Issued: {format(parseISO(candidate.visa_issue_date), 'MMM dd, yyyy')}
+                              </span>
+                            )}
                             <span className="flex items-center gap-1">
                               <Calendar className="h-3.5 w-3.5" />
-                              Expires: {format(parseISO(candidate.passport_expiry_date), 'MMM dd, yyyy')}
+                              Expires: {format(parseISO(candidate.visa_expiry_date), 'MMM dd, yyyy')}
                             </span>
                           </div>
                         </div>
