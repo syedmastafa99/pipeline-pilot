@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { logActivity } from './useActivityLogs';
 
 export interface Task {
   id: string;
@@ -55,6 +56,16 @@ export const useCreateTask = () => {
         .single();
       
       if (error) throw error;
+      
+      // Log activity
+      await logActivity({
+        action: 'create',
+        table_name: 'agency_tasks',
+        record_id: data.id,
+        new_data: JSON.parse(JSON.stringify(data)),
+        description: `Created task: ${data.title}`,
+      });
+      
       return data as Task;
     },
     onSuccess: () => {
@@ -72,6 +83,13 @@ export const useUpdateTask = () => {
   
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Task> & { id: string }) => {
+      // Get old data first
+      const { data: oldData } = await supabase
+        .from('agency_tasks')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
       const { data, error } = await supabase
         .from('agency_tasks')
         .update(updates)
@@ -80,6 +98,17 @@ export const useUpdateTask = () => {
         .single();
       
       if (error) throw error;
+      
+      // Log activity
+      await logActivity({
+        action: 'update',
+        table_name: 'agency_tasks',
+        record_id: id,
+        old_data: JSON.parse(JSON.stringify(oldData)),
+        new_data: JSON.parse(JSON.stringify(data)),
+        description: `Updated task: ${data.title}`,
+      });
+      
       return data as Task;
     },
     onSuccess: () => {
@@ -97,12 +126,30 @@ export const useDeleteTask = () => {
   
   return useMutation({
     mutationFn: async (id: string) => {
+      // Get old data first
+      const { data: oldData } = await supabase
+        .from('agency_tasks')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
       const { error } = await supabase
         .from('agency_tasks')
         .delete()
         .eq('id', id);
       
       if (error) throw error;
+      
+      // Log activity
+      if (oldData) {
+        await logActivity({
+          action: 'delete',
+          table_name: 'agency_tasks',
+          record_id: id,
+          old_data: JSON.parse(JSON.stringify(oldData)),
+          description: `Deleted task: ${oldData.title}`,
+        });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
