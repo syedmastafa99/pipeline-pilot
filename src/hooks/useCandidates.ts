@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { StageKey } from '@/lib/constants';
+import { logActivity } from './useActivityLogs';
 
 export interface Candidate {
   id: string;
@@ -154,6 +155,16 @@ export const useCreateCandidate = () => {
         .single();
       
       if (error) throw error;
+      
+      // Log activity
+      await logActivity({
+        action: 'create',
+        table_name: 'candidates',
+        record_id: data.id,
+        new_data: JSON.parse(JSON.stringify(data)),
+        description: `Created candidate: ${data.full_name}`,
+      });
+      
       return data as Candidate;
     },
     onSuccess: () => {
@@ -171,6 +182,13 @@ export const useUpdateCandidate = () => {
   
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Candidate> & { id: string }) => {
+      // Get old data first
+      const { data: oldData } = await supabase
+        .from('candidates')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
       const { data, error } = await supabase
         .from('candidates')
         .update(updates)
@@ -179,6 +197,17 @@ export const useUpdateCandidate = () => {
         .single();
       
       if (error) throw error;
+      
+      // Log activity
+      await logActivity({
+        action: 'update',
+        table_name: 'candidates',
+        record_id: id,
+        old_data: JSON.parse(JSON.stringify(oldData)),
+        new_data: JSON.parse(JSON.stringify(data)),
+        description: `Updated candidate: ${data.full_name}`,
+      });
+      
       return data as Candidate;
     },
     onSuccess: (data) => {
@@ -200,6 +229,13 @@ export const useUpdateCandidateStage = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('You must be logged in to update stage');
       
+      // Get old data first
+      const { data: oldData } = await supabase
+        .from('candidates')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
       const { data, error } = await supabase
         .from('candidates')
         .update({ current_stage: stage })
@@ -213,6 +249,16 @@ export const useUpdateCandidateStage = () => {
       await supabase
         .from('stage_history')
         .insert([{ candidate_id: id, stage, user_id: user.id }]);
+      
+      // Log activity
+      await logActivity({
+        action: 'update',
+        table_name: 'candidates',
+        record_id: id,
+        old_data: { current_stage: oldData?.current_stage },
+        new_data: { current_stage: stage },
+        description: `Changed stage for ${data.full_name}: ${oldData?.current_stage} → ${stage}`,
+      });
       
       return data as Candidate;
     },
@@ -233,12 +279,30 @@ export const useDeleteCandidate = () => {
   
   return useMutation({
     mutationFn: async (id: string) => {
+      // Get old data first
+      const { data: oldData } = await supabase
+        .from('candidates')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
       const { error } = await supabase
         .from('candidates')
         .delete()
         .eq('id', id);
       
       if (error) throw error;
+      
+      // Log activity
+      if (oldData) {
+        await logActivity({
+          action: 'delete',
+          table_name: 'candidates',
+          record_id: id,
+          old_data: JSON.parse(JSON.stringify(oldData)),
+          description: `Deleted candidate: ${oldData.full_name}`,
+        });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['candidates'] });
