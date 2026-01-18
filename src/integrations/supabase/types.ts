@@ -177,6 +177,8 @@ export type Database = {
           issuing_authority: string | null
           job_title: string | null
           legal_guardian_name: string | null
+          medical_expiry_date: string | null
+          medical_fit_date: string | null
           mother_name: string | null
           nationality: string | null
           notes: string | null
@@ -216,6 +218,8 @@ export type Database = {
           issuing_authority?: string | null
           job_title?: string | null
           legal_guardian_name?: string | null
+          medical_expiry_date?: string | null
+          medical_fit_date?: string | null
           mother_name?: string | null
           nationality?: string | null
           notes?: string | null
@@ -255,6 +259,8 @@ export type Database = {
           issuing_authority?: string | null
           job_title?: string | null
           legal_guardian_name?: string | null
+          medical_expiry_date?: string | null
+          medical_fit_date?: string | null
           mother_name?: string | null
           nationality?: string | null
           notes?: string | null

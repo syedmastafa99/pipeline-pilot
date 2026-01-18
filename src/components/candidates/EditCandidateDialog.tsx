@@ -64,6 +64,8 @@ interface FormData {
   passport_scan_url: string;
   visa_issue_date: string;
   visa_expiry_date: string;
+  medical_fit_date: string;
+  medical_expiry_date: string;
 }
 
 const initialFormData: FormData = {
@@ -100,6 +102,8 @@ const initialFormData: FormData = {
   passport_scan_url: '',
   visa_issue_date: '',
   visa_expiry_date: '',
+  medical_fit_date: '',
+  medical_expiry_date: '',
 };
 
 export function EditCandidateDialog({ candidate, open, onOpenChange }: EditCandidateDialogProps) {
@@ -145,6 +149,8 @@ export function EditCandidateDialog({ candidate, open, onOpenChange }: EditCandi
         passport_scan_url: candidate.passport_scan_url || '',
         visa_issue_date: candidate.visa_issue_date || '',
         visa_expiry_date: candidate.visa_expiry_date || '',
+        medical_fit_date: candidate.medical_fit_date || '',
+        medical_expiry_date: candidate.medical_expiry_date || '',
       });
       
       // Load passport preview if exists
@@ -670,6 +676,32 @@ export function EditCandidateDialog({ candidate, open, onOpenChange }: EditCandi
                     </SelectContent>
                   </Select>
                 </div>
+
+                {formData.current_stage === 'medical' && (
+                  <div className="pt-4 border-t">
+                    <h4 className="text-sm font-medium mb-4">Medical Information</h4>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="edit_medical_fit_date">Medical Fit Date</Label>
+                        <Input
+                          id="edit_medical_fit_date"
+                          type="date"
+                          value={formData.medical_fit_date}
+                          onChange={(e) => handleChange('medical_fit_date', e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="edit_medical_expiry_date">Medical Expiry Date</Label>
+                        <Input
+                          id="edit_medical_expiry_date"
+                          type="date"
+                          value={formData.medical_expiry_date}
+                          onChange={(e) => handleChange('medical_expiry_date', e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {formData.current_stage === 'visa_issued' && (
                   <div className="pt-4 border-t">
