@@ -671,29 +671,31 @@ export function EditCandidateDialog({ candidate, open, onOpenChange }: EditCandi
                   </Select>
                 </div>
 
-                <div className="pt-4 border-t">
-                  <h4 className="text-sm font-medium mb-4">Visa Information</h4>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label htmlFor="edit_visa_issue_date">Visa Issue Date</Label>
-                      <Input
-                        id="edit_visa_issue_date"
-                        type="date"
-                        value={formData.visa_issue_date}
-                        onChange={(e) => handleChange('visa_issue_date', e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="edit_visa_expiry_date">Visa Expiry Date</Label>
-                      <Input
-                        id="edit_visa_expiry_date"
-                        type="date"
-                        value={formData.visa_expiry_date}
-                        onChange={(e) => handleChange('visa_expiry_date', e.target.value)}
-                      />
+                {formData.current_stage === 'visa_issued' && (
+                  <div className="pt-4 border-t">
+                    <h4 className="text-sm font-medium mb-4">Visa Information</h4>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="edit_visa_issue_date">Visa Issue Date</Label>
+                        <Input
+                          id="edit_visa_issue_date"
+                          type="date"
+                          value={formData.visa_issue_date}
+                          onChange={(e) => handleChange('visa_issue_date', e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="edit_visa_expiry_date">Visa Expiry Date</Label>
+                        <Input
+                          id="edit_visa_expiry_date"
+                          type="date"
+                          value={formData.visa_expiry_date}
+                          onChange={(e) => handleChange('visa_expiry_date', e.target.value)}
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
               </TabsContent>
             </ScrollArea>
           </Tabs>
