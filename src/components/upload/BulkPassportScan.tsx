@@ -13,7 +13,7 @@ interface ScannedPassport {
   id: string;
   file: File;
   preview: string;
-  status: 'pending' | 'processing' | 'success' | 'error';
+  status: 'pending' | 'processing' | 'success' | 'error' | 'duplicate';
   data?: CreateCandidateInput;
   error?: string;
 }
@@ -170,6 +170,18 @@ export function BulkPassportScan() {
     e.target.value = '';
   }, [addFiles]);
 
+  const checkDuplicatePassport = async (passportNumber: string): Promise<boolean> => {
+    if (!passportNumber) return false;
+    
+    const { data } = await supabase
+      .from('candidates')
+      .select('id')
+      .eq('passport_number', passportNumber)
+      .limit(1);
+    
+    return (data && data.length > 0);
+  };
+
   const processAllPassports = async () => {
     const pendingPassports = passports.filter(p => p.status === 'pending' || p.status === 'error');
     if (pendingPassports.length === 0) return;
@@ -186,13 +198,19 @@ export function BulkPassportScan() {
 
       const result = await extractPassportData(passport);
       
+      // Check for duplicate if extraction was successful
+      let isDuplicate = false;
+      if (result.data?.passport_number) {
+        isDuplicate = await checkDuplicatePassport(result.data.passport_number);
+      }
+      
       setPassports(prev => prev.map(p => 
         p.id === passport.id 
           ? { 
               ...p, 
-              status: result.data ? 'success' : 'error',
+              status: isDuplicate ? 'duplicate' : (result.data ? 'success' : 'error'),
               data: result.data,
-              error: result.error
+              error: isDuplicate ? `Passport ${result.data?.passport_number} already exists` : result.error
             } 
           : p
       ));
@@ -206,6 +224,10 @@ export function BulkPassportScan() {
     }
 
     setIsProcessing(false);
+    const duplicateCount = passports.filter(p => p.status === 'duplicate').length;
+    if (duplicateCount > 0) {
+      toast.warning(`${duplicateCount} duplicate passport(s) found`);
+    }
     toast.success(`Processed ${pendingPassports.length} passport(s)`);
   };
 
@@ -239,6 +261,7 @@ export function BulkPassportScan() {
   const pendingCount = passports.filter(p => p.status === 'pending').length;
   const successCount = passports.filter(p => p.status === 'success').length;
   const errorCount = passports.filter(p => p.status === 'error').length;
+  const duplicateCount = passports.filter(p => p.status === 'duplicate').length;
   const processingCount = passports.filter(p => p.status === 'processing').length;
   const totalToProcess = pendingCount + errorCount;
 
@@ -336,6 +359,7 @@ export function BulkPassportScan() {
                       "group relative overflow-hidden rounded-lg border bg-card transition-all",
                       passport.status === 'success' && "border-success/50",
                       passport.status === 'error' && "border-destructive/50",
+                      passport.status === 'duplicate' && "border-warning/50",
                       passport.status === 'processing' && "border-primary/50"
                     )}
                   >
@@ -353,7 +377,8 @@ export function BulkPassportScan() {
                       passport.status === 'pending' && "opacity-0 group-hover:opacity-100",
                       passport.status === 'processing' && "opacity-100",
                       passport.status === 'success' && "opacity-0",
-                      passport.status === 'error' && "opacity-80"
+                      passport.status === 'error' && "opacity-80",
+                      passport.status === 'duplicate' && "opacity-80"
                     )}>
                       {passport.status === 'processing' && (
                         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -362,6 +387,12 @@ export function BulkPassportScan() {
                         <div className="p-2 text-center">
                           <AlertCircle className="mx-auto h-6 w-6 text-destructive" />
                           <p className="mt-1 text-xs text-destructive">{passport.error}</p>
+                        </div>
+                      )}
+                      {passport.status === 'duplicate' && (
+                        <div className="p-2 text-center">
+                          <AlertCircle className="mx-auto h-6 w-6 text-amber-500" />
+                          <p className="mt-1 text-xs text-amber-600">{passport.error}</p>
                         </div>
                       )}
                     </div>
@@ -421,6 +452,11 @@ export function BulkPassportScan() {
                 {errorCount > 0 && (
                   <span className="text-destructive">
                     {errorCount} failed
+                  </span>
+                )}
+                {duplicateCount > 0 && (
+                  <span className="text-amber-500">
+                    {duplicateCount} duplicate
                   </span>
                 )}
               </div>
