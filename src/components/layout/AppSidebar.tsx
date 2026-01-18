@@ -10,6 +10,7 @@ import {
   ShieldCheck,
   UserSquare2,
   CalendarClock,
+  Stethoscope,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import {
@@ -37,7 +38,8 @@ const mainNavItems = [
   { title: 'Tasks', url: '/tasks', icon: ClipboardList },
   { title: 'Reports', url: '/reports', icon: FileBarChart },
   { title: 'Bio Data', url: '/biodata', icon: UserSquare2 },
-  { title: 'Visa Expiry', url: '/visa-expiry', icon: CalendarClock },
+  { title: 'Medical Expiry Soon', url: '/medical-expiry', icon: Stethoscope },
+  { title: 'Visa Expiry Soon', url: '/visa-expiry', icon: CalendarClock },
   { title: 'Bulk Upload', url: '/upload', icon: Upload },
 ];
 

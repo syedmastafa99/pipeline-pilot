@@ -44,6 +44,9 @@ export interface Candidate {
   // Visa fields
   visa_issue_date: string | null;
   visa_expiry_date: string | null;
+  // Medical fields
+  medical_fit_date: string | null;
+  medical_expiry_date: string | null;
 }
 
 export interface CreateCandidateInput {

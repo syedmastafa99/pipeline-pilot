@@ -4,18 +4,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { useCandidates } from '@/hooks/useCandidates';
 import { differenceInDays, parseISO, format } from 'date-fns';
-import { AlertTriangle, Calendar, User, FileText } from 'lucide-react';
+import { AlertTriangle, Calendar, User, FileText, Stethoscope } from 'lucide-react';
 
-interface ExpiringCandidate {
+interface ExpiringMedicalCandidate {
   id: string;
   full_name: string;
   passport_number: string | null;
-  visa_issue_date: string | null;
-  visa_expiry_date: string;
+  medical_fit_date: string | null;
+  medical_expiry_date: string;
   daysLeft: number;
 }
 
-export default function VisaExpiry() {
+export default function MedicalExpiry() {
   const { data: candidates, isLoading } = useCandidates();
 
   const expiringCandidates = useMemo(() => {
@@ -24,22 +24,22 @@ export default function VisaExpiry() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const expiring: ExpiringCandidate[] = candidates
+    const expiring: ExpiringMedicalCandidate[] = candidates
       .filter((candidate) => {
-        if (!candidate.visa_expiry_date) return false;
-        const expiryDate = parseISO(candidate.visa_expiry_date);
+        if (!candidate.medical_expiry_date) return false;
+        const expiryDate = parseISO(candidate.medical_expiry_date);
         const daysLeft = differenceInDays(expiryDate, today);
         return daysLeft >= 0 && daysLeft <= 15;
       })
       .map((candidate) => {
-        const expiryDate = parseISO(candidate.visa_expiry_date!);
+        const expiryDate = parseISO(candidate.medical_expiry_date!);
         const daysLeft = differenceInDays(expiryDate, today);
         return {
           id: candidate.id,
           full_name: candidate.full_name,
           passport_number: candidate.passport_number,
-          visa_issue_date: candidate.visa_issue_date,
-          visa_expiry_date: candidate.visa_expiry_date!,
+          medical_fit_date: candidate.medical_fit_date,
+          medical_expiry_date: candidate.medical_expiry_date!,
           daysLeft,
         };
       })
@@ -64,9 +64,9 @@ export default function VisaExpiry() {
     <AppLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Visa Expiry Soon</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Medical Expiry Soon</h1>
           <p className="text-muted-foreground mt-1">
-            Candidates with visas expiring within 15 days
+            Candidates with medical certificates expiring within 15 days
           </p>
         </div>
 
@@ -77,10 +77,10 @@ export default function VisaExpiry() {
         ) : expiringCandidates.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
-              <Calendar className="h-12 w-12 text-muted-foreground/50 mb-4" />
-              <h3 className="text-lg font-medium text-foreground">No Expiring Visas</h3>
+              <Stethoscope className="h-12 w-12 text-muted-foreground/50 mb-4" />
+              <h3 className="text-lg font-medium text-foreground">No Expiring Medical Certificates</h3>
               <p className="text-muted-foreground text-center mt-1">
-                There are no candidates with visas expiring in the next 15 days.
+                There are no candidates with medical certificates expiring in the next 15 days.
               </p>
             </CardContent>
           </Card>
@@ -91,11 +91,11 @@ export default function VisaExpiry() {
                 <div className="flex items-center gap-2">
                   <AlertTriangle className="h-5 w-5 text-destructive" />
                   <CardTitle className="text-lg text-destructive">
-                    {expiringCandidates.length} Visa{expiringCandidates.length !== 1 ? 's' : ''} Expiring Soon
+                    {expiringCandidates.length} Medical Certificate{expiringCandidates.length !== 1 ? 's' : ''} Expiring Soon
                   </CardTitle>
                 </div>
                 <CardDescription>
-                  These candidates require immediate attention for visa renewal
+                  These candidates require immediate attention for medical renewal
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -120,15 +120,15 @@ export default function VisaExpiry() {
                                 {candidate.passport_number}
                               </span>
                             )}
-                            {candidate.visa_issue_date && (
+                            {candidate.medical_fit_date && (
                               <span className="flex items-center gap-1">
                                 <Calendar className="h-3.5 w-3.5" />
-                                Issued: {format(parseISO(candidate.visa_issue_date), 'MMM dd, yyyy')}
+                                Fit: {format(parseISO(candidate.medical_fit_date), 'MMM dd, yyyy')}
                               </span>
                             )}
                             <span className="flex items-center gap-1">
                               <Calendar className="h-3.5 w-3.5" />
-                              Expires: {format(parseISO(candidate.visa_expiry_date), 'MMM dd, yyyy')}
+                              Expires: {format(parseISO(candidate.medical_expiry_date), 'MMM dd, yyyy')}
                             </span>
                           </div>
                         </div>
