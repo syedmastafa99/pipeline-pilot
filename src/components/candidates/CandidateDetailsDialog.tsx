@@ -150,14 +150,14 @@ export function CandidateDetailsDialog({ candidate, open, onOpenChange }: Candid
             {candidate.job_title && (
               <DetailItem icon={FileText} label="Job Title" value={candidate.job_title} />
             )}
-            {candidate.visa_issue_date && (
+            {candidate.current_stage === 'visa_issued' && candidate.visa_issue_date && (
               <DetailItem 
                 icon={Calendar} 
                 label="Visa Issue Date" 
                 value={format(new Date(candidate.visa_issue_date), 'MMM dd, yyyy')} 
               />
             )}
-            {candidate.visa_expiry_date && (
+            {candidate.current_stage === 'visa_issued' && candidate.visa_expiry_date && (
               <DetailItem 
                 icon={Calendar} 
                 label="Visa Expiry Date" 
