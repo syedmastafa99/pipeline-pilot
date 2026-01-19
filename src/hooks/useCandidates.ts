@@ -47,6 +47,9 @@ export interface Candidate {
   // Medical fields
   medical_fit_date: string | null;
   medical_expiry_date: string | null;
+  // Additional fields
+  agent_name: string | null;
+  ref_company: string | null;
 }
 
 export interface CreateCandidateInput {
@@ -84,6 +87,9 @@ export interface CreateCandidateInput {
   // Visa fields
   visa_issue_date?: string;
   visa_expiry_date?: string;
+  // Additional fields
+  agent_name?: string;
+  ref_company?: string;
 }
 
 export interface StageHistory {
