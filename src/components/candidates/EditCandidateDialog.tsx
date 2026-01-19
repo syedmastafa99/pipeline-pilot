@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -20,9 +20,59 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Candidate, useUpdateCandidate } from '@/hooks/useCandidates';
 import { STAGES, StageKey } from '@/lib/constants';
-import { Upload, FileImage, User, Briefcase, Phone, Settings } from 'lucide-react';
+import { Upload, FileImage, User, Briefcase, Phone, Settings, AlertTriangle, Clock, ArrowRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { addDays, differenceInDays, format } from 'date-fns';
+
+// Helper function to calculate remaining days and get next steps
+function calculateExpiryInfo(issueDate: string | null, validityDays: number) {
+  if (!issueDate) return null;
+  
+  const issueDateObj = new Date(issueDate);
+  const expiryDate = addDays(issueDateObj, validityDays);
+  const today = new Date();
+  const remainingDays = differenceInDays(expiryDate, today);
+  
+  return {
+    expiryDate,
+    remainingDays,
+    isExpired: remainingDays < 0,
+    isUrgent: remainingDays >= 0 && remainingDays <= 15,
+  };
+}
+
+function getMedicalNextSteps(remainingDays: number): string[] {
+  if (remainingDays < 0) {
+    return ['Medical certificate has expired', 'Schedule new medical examination immediately'];
+  }
+  if (remainingDays <= 7) {
+    return ['Critical: Complete police clearance urgently', 'Prepare all documents for next stage'];
+  }
+  if (remainingDays <= 15) {
+    return ['Submit police clearance application', 'Ensure all medical documents are filed'];
+  }
+  if (remainingDays <= 30) {
+    return ['Schedule police clearance appointment', 'Review document requirements'];
+  }
+  return ['Proceed with normal processing', 'Monitor expiry timeline'];
+}
+
+function getVisaNextSteps(remainingDays: number): string[] {
+  if (remainingDays < 0) {
+    return ['Visa has expired', 'Contact embassy for renewal or extension'];
+  }
+  if (remainingDays <= 7) {
+    return ['Critical: Book flight immediately', 'Complete all pre-departure formalities'];
+  }
+  if (remainingDays <= 15) {
+    return ['Finalize flight bookings', 'Complete manpower documentation'];
+  }
+  if (remainingDays <= 30) {
+    return ['Start flight search', 'Prepare travel documents'];
+  }
+  return ['Proceed with normal processing', 'Monitor expiry timeline'];
+}
 
 interface EditCandidateDialogProps {
   candidate: Candidate | null;
@@ -678,55 +728,17 @@ export function EditCandidateDialog({ candidate, open, onOpenChange }: EditCandi
                 </div>
 
                 {formData.current_stage === 'medical' && (
-                  <div className="pt-4 border-t">
-                    <h4 className="text-sm font-medium mb-4">Medical Information</h4>
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <div className="space-y-2">
-                        <Label htmlFor="edit_medical_fit_date">Medical Fit Date</Label>
-                        <Input
-                          id="edit_medical_fit_date"
-                          type="date"
-                          value={formData.medical_fit_date}
-                          onChange={(e) => handleChange('medical_fit_date', e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="edit_medical_expiry_date">Medical Expiry Date</Label>
-                        <Input
-                          id="edit_medical_expiry_date"
-                          type="date"
-                          value={formData.medical_expiry_date}
-                          onChange={(e) => handleChange('medical_expiry_date', e.target.value)}
-                        />
-                      </div>
-                    </div>
-                  </div>
+                  <MedicalExpirySection 
+                    medicalFitDate={formData.medical_fit_date}
+                    onMedicalFitDateChange={(value) => handleChange('medical_fit_date', value)}
+                  />
                 )}
 
                 {formData.current_stage === 'visa_issued' && (
-                  <div className="pt-4 border-t">
-                    <h4 className="text-sm font-medium mb-4">Visa Information</h4>
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <div className="space-y-2">
-                        <Label htmlFor="edit_visa_issue_date">Visa Issue Date</Label>
-                        <Input
-                          id="edit_visa_issue_date"
-                          type="date"
-                          value={formData.visa_issue_date}
-                          onChange={(e) => handleChange('visa_issue_date', e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="edit_visa_expiry_date">Visa Expiry Date</Label>
-                        <Input
-                          id="edit_visa_expiry_date"
-                          type="date"
-                          value={formData.visa_expiry_date}
-                          onChange={(e) => handleChange('visa_expiry_date', e.target.value)}
-                        />
-                      </div>
-                    </div>
-                  </div>
+                  <VisaExpirySection
+                    visaIssueDate={formData.visa_issue_date}
+                    onVisaIssueDateChange={(value) => handleChange('visa_issue_date', value)}
+                  />
                 )}
               </TabsContent>
             </ScrollArea>
@@ -743,5 +755,181 @@ export function EditCandidateDialog({ candidate, open, onOpenChange }: EditCandi
         </form>
       </DialogContent>
     </Dialog>
+  );
+}
+
+// Medical Expiry Section Component
+function MedicalExpirySection({ 
+  medicalFitDate, 
+  onMedicalFitDateChange 
+}: { 
+  medicalFitDate: string; 
+  onMedicalFitDateChange: (value: string) => void;
+}) {
+  const expiryInfo = useMemo(() => 
+    calculateExpiryInfo(medicalFitDate || null, 60), 
+    [medicalFitDate]
+  );
+
+  return (
+    <div className="pt-4 border-t">
+      <h4 className="text-sm font-medium mb-4">Medical Information</h4>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="edit_medical_fit_date">Medical Fit Date</Label>
+          <Input
+            id="edit_medical_fit_date"
+            type="date"
+            value={medicalFitDate}
+            onChange={(e) => onMedicalFitDateChange(e.target.value)}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Medical Expiry (60 days)</Label>
+          {expiryInfo ? (
+            <div className={`rounded-lg border p-3 ${
+              expiryInfo.isExpired 
+                ? 'bg-destructive/10 border-destructive/50' 
+                : expiryInfo.isUrgent 
+                  ? 'bg-amber-500/10 border-amber-500/50' 
+                  : 'bg-muted/50 border-muted'
+            }`}>
+              <div className="flex items-center gap-2">
+                {expiryInfo.isExpired ? (
+                  <AlertTriangle className="h-4 w-4 text-destructive" />
+                ) : expiryInfo.isUrgent ? (
+                  <AlertTriangle className="h-4 w-4 text-amber-500" />
+                ) : (
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                )}
+                <span className={`text-lg font-bold ${
+                  expiryInfo.isExpired 
+                    ? 'text-destructive' 
+                    : expiryInfo.isUrgent 
+                      ? 'text-amber-500' 
+                      : 'text-foreground'
+                }`}>
+                  {expiryInfo.isExpired 
+                    ? `Expired ${Math.abs(expiryInfo.remainingDays)} days ago` 
+                    : `${expiryInfo.remainingDays} days remaining`}
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Expires: {format(expiryInfo.expiryDate, 'MMM dd, yyyy')}
+              </p>
+            </div>
+          ) : (
+            <div className="rounded-lg border border-muted bg-muted/30 p-3 text-sm text-muted-foreground">
+              Enter medical fit date to see expiry
+            </div>
+          )}
+        </div>
+      </div>
+      
+      {expiryInfo && (
+        <div className="mt-4 rounded-lg bg-primary/5 border border-primary/20 p-3">
+          <h5 className="text-sm font-medium flex items-center gap-2 mb-2">
+            <ArrowRight className="h-4 w-4 text-primary" />
+            Next Steps
+          </h5>
+          <ul className="space-y-1">
+            {getMedicalNextSteps(expiryInfo.remainingDays).map((step, idx) => (
+              <li key={idx} className="text-sm text-muted-foreground flex items-start gap-2">
+                <span className="text-primary">•</span>
+                {step}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Visa Expiry Section Component
+function VisaExpirySection({ 
+  visaIssueDate, 
+  onVisaIssueDateChange 
+}: { 
+  visaIssueDate: string; 
+  onVisaIssueDateChange: (value: string) => void;
+}) {
+  const expiryInfo = useMemo(() => 
+    calculateExpiryInfo(visaIssueDate || null, 90), 
+    [visaIssueDate]
+  );
+
+  return (
+    <div className="pt-4 border-t">
+      <h4 className="text-sm font-medium mb-4">Visa Information</h4>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="edit_visa_issue_date">Visa Issue Date</Label>
+          <Input
+            id="edit_visa_issue_date"
+            type="date"
+            value={visaIssueDate}
+            onChange={(e) => onVisaIssueDateChange(e.target.value)}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Visa Expiry (90 days)</Label>
+          {expiryInfo ? (
+            <div className={`rounded-lg border p-3 ${
+              expiryInfo.isExpired 
+                ? 'bg-destructive/10 border-destructive/50' 
+                : expiryInfo.isUrgent 
+                  ? 'bg-amber-500/10 border-amber-500/50' 
+                  : 'bg-muted/50 border-muted'
+            }`}>
+              <div className="flex items-center gap-2">
+                {expiryInfo.isExpired ? (
+                  <AlertTriangle className="h-4 w-4 text-destructive" />
+                ) : expiryInfo.isUrgent ? (
+                  <AlertTriangle className="h-4 w-4 text-amber-500" />
+                ) : (
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                )}
+                <span className={`text-lg font-bold ${
+                  expiryInfo.isExpired 
+                    ? 'text-destructive' 
+                    : expiryInfo.isUrgent 
+                      ? 'text-amber-500' 
+                      : 'text-foreground'
+                }`}>
+                  {expiryInfo.isExpired 
+                    ? `Expired ${Math.abs(expiryInfo.remainingDays)} days ago` 
+                    : `${expiryInfo.remainingDays} days remaining`}
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Expires: {format(expiryInfo.expiryDate, 'MMM dd, yyyy')}
+              </p>
+            </div>
+          ) : (
+            <div className="rounded-lg border border-muted bg-muted/30 p-3 text-sm text-muted-foreground">
+              Enter visa issue date to see expiry
+            </div>
+          )}
+        </div>
+      </div>
+      
+      {expiryInfo && (
+        <div className="mt-4 rounded-lg bg-primary/5 border border-primary/20 p-3">
+          <h5 className="text-sm font-medium flex items-center gap-2 mb-2">
+            <ArrowRight className="h-4 w-4 text-primary" />
+            Next Steps
+          </h5>
+          <ul className="space-y-1">
+            {getVisaNextSteps(expiryInfo.remainingDays).map((step, idx) => (
+              <li key={idx} className="text-sm text-muted-foreground flex items-start gap-2">
+                <span className="text-primary">•</span>
+                {step}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
   );
 }
