@@ -22,6 +22,8 @@ export function BioDataEditor({
   onAddField,
 }: BioDataEditorProps) {
   const standardFields = [
+    { label: 'Company Name', value: candidate.ref_company },
+    { label: 'Trade', value: candidate.job_title },
     { label: 'Full Name', value: candidate.full_name },
     { label: 'Surname', value: candidate.surname },
     { label: 'Given Name', value: candidate.given_name },
@@ -44,9 +46,7 @@ export function BioDataEditor({
     { label: 'Email', value: candidate.email },
     { label: 'Destination Country', value: candidate.destination_country },
     { label: 'Employer', value: candidate.employer },
-    { label: 'Job Title', value: candidate.job_title },
     { label: 'Agent Name', value: candidate.agent_name },
-    { label: 'Ref Company', value: candidate.ref_company },
     { label: 'Emergency Contact', value: candidate.emergency_contact_name },
     { label: 'Emergency Contact Relation', value: candidate.emergency_contact_relationship },
     { label: 'Emergency Contact Phone', value: candidate.emergency_contact_phone },
