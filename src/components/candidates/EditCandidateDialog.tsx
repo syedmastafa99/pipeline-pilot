@@ -231,6 +231,24 @@ export function EditCandidateDialog({ candidate, open, onOpenChange }: EditCandi
     
     if (!candidate || !formData.full_name.trim()) return;
     
+    // Auto-calculate expiry dates
+    let calculatedMedicalExpiry = formData.medical_expiry_date;
+    let calculatedVisaExpiry = formData.visa_expiry_date;
+    
+    if (formData.medical_fit_date) {
+      const medicalFitDate = new Date(formData.medical_fit_date);
+      const medicalExpiryDate = new Date(medicalFitDate);
+      medicalExpiryDate.setDate(medicalExpiryDate.getDate() + 60);
+      calculatedMedicalExpiry = medicalExpiryDate.toISOString().split('T')[0];
+    }
+    
+    if (formData.visa_issue_date) {
+      const visaIssueDate = new Date(formData.visa_issue_date);
+      const visaExpiryDate = new Date(visaIssueDate);
+      visaExpiryDate.setDate(visaExpiryDate.getDate() + 90);
+      calculatedVisaExpiry = visaExpiryDate.toISOString().split('T')[0];
+    }
+    
     // Convert empty date strings to null for proper database storage
     const sanitizedData = {
       ...formData,
@@ -238,9 +256,9 @@ export function EditCandidateDialog({ candidate, open, onOpenChange }: EditCandi
       passport_issue_date: formData.passport_issue_date || null,
       passport_expiry_date: formData.passport_expiry_date || null,
       visa_issue_date: formData.visa_issue_date || null,
-      visa_expiry_date: formData.visa_expiry_date || null,
+      visa_expiry_date: calculatedVisaExpiry || null,
       medical_fit_date: formData.medical_fit_date || null,
-      medical_expiry_date: formData.medical_expiry_date || null,
+      medical_expiry_date: calculatedMedicalExpiry || null,
     };
     
     await updateCandidate.mutateAsync({
