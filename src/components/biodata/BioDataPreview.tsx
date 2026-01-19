@@ -264,31 +264,31 @@ export function BioDataPreview({
           </div>
 
           {/* Top section with Photo and Company/Trade info */}
-          <div className="flex justify-between items-start mb-6">
-            <div className="flex-1">
+          <div className="flex justify-between items-start mb-8">
+            <div className="flex-1 pr-4">
               {candidate.ref_company && (
-                <div className="field-row flex mb-2 text-sm">
-                  <span className="field-label w-[120px] font-semibold text-gray-700">
-                    Company Name:
+                <div className="mb-3">
+                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    Company Name
                   </span>
-                  <span className="field-value flex-1 font-bold text-base">
+                  <p className="text-2xl font-bold text-gray-900 mt-1">
                     {candidate.ref_company}
-                  </span>
+                  </p>
                 </div>
               )}
               {candidate.job_title && (
-                <div className="field-row flex mb-2 text-sm">
-                  <span className="field-label w-[120px] font-semibold text-gray-700">
-                    Trade:
+                <div>
+                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    Trade
                   </span>
-                  <span className="field-value flex-1 font-bold text-base">
+                  <p className="text-xl font-bold text-gray-800 mt-1">
                     {candidate.job_title}
-                  </span>
+                  </p>
                 </div>
               )}
             </div>
             {/* Photo placeholder */}
-            <div className="w-[120px] h-[150px] border border-gray-300 flex items-center justify-center ml-5">
+            <div className="w-[120px] h-[150px] border border-gray-300 flex items-center justify-center flex-shrink-0">
               {candidate.passport_scan_url ? (
                 <img 
                   src={candidate.passport_scan_url} 
