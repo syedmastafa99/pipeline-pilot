@@ -16,10 +16,14 @@ export default function Pipeline() {
   const [activeStage, setActiveStage] = useState<StageKey | 'all'>('all');
 
   const filteredCandidates = candidates.filter(candidate => {
+    const query = searchQuery.toLowerCase();
     const matchesSearch = 
-      candidate.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      candidate.passport_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      candidate.email?.toLowerCase().includes(searchQuery.toLowerCase());
+      candidate.full_name.toLowerCase().includes(query) ||
+      candidate.passport_number?.toLowerCase().includes(query) ||
+      candidate.employer?.toLowerCase().includes(query) ||
+      candidate.destination_country?.toLowerCase().includes(query) ||
+      candidate.agent_name?.toLowerCase().includes(query) ||
+      candidate.ref_company?.toLowerCase().includes(query);
     
     const matchesStage = activeStage === 'all' || candidate.current_stage === activeStage;
     
@@ -49,7 +53,7 @@ export default function Pipeline() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search candidates by name, passport, or email..."
+              placeholder="Search by name, passport, employer, country, agent, ref company..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"

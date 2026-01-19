@@ -159,6 +159,7 @@ export type Database = {
       }
       candidates: {
         Row: {
+          agent_name: string | null
           country_code: string | null
           created_at: string
           current_stage: Database["public"]["Enums"]["candidate_stage"]
@@ -192,6 +193,7 @@ export type Database = {
           phone: string | null
           place_of_birth: string | null
           previous_passport_number: string | null
+          ref_company: string | null
           sex: string | null
           surname: string | null
           updated_at: string
@@ -200,6 +202,7 @@ export type Database = {
           visa_issue_date: string | null
         }
         Insert: {
+          agent_name?: string | null
           country_code?: string | null
           created_at?: string
           current_stage?: Database["public"]["Enums"]["candidate_stage"]
@@ -233,6 +236,7 @@ export type Database = {
           phone?: string | null
           place_of_birth?: string | null
           previous_passport_number?: string | null
+          ref_company?: string | null
           sex?: string | null
           surname?: string | null
           updated_at?: string
@@ -241,6 +245,7 @@ export type Database = {
           visa_issue_date?: string | null
         }
         Update: {
+          agent_name?: string | null
           country_code?: string | null
           created_at?: string
           current_stage?: Database["public"]["Enums"]["candidate_stage"]
@@ -274,6 +279,7 @@ export type Database = {
           phone?: string | null
           place_of_birth?: string | null
           previous_passport_number?: string | null
+          ref_company?: string | null
           sex?: string | null
           surname?: string | null
           updated_at?: string
