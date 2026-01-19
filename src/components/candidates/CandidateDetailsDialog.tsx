@@ -21,9 +21,60 @@ import {
   Hash,
   CheckCircle2,
   Clock,
-  ClipboardList
+  ClipboardList,
+  AlertTriangle,
+  ArrowRight
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, addDays, differenceInDays } from 'date-fns';
+
+// Helper function to calculate remaining days and get next steps
+function calculateExpiryInfo(issueDate: string | null, validityDays: number) {
+  if (!issueDate) return null;
+  
+  const issueDateObj = new Date(issueDate);
+  const expiryDate = addDays(issueDateObj, validityDays);
+  const today = new Date();
+  const remainingDays = differenceInDays(expiryDate, today);
+  
+  return {
+    expiryDate,
+    remainingDays,
+    isExpired: remainingDays < 0,
+    isUrgent: remainingDays >= 0 && remainingDays <= 15,
+  };
+}
+
+function getMedicalNextSteps(remainingDays: number): string[] {
+  if (remainingDays < 0) {
+    return ['Medical certificate has expired', 'Schedule new medical examination immediately'];
+  }
+  if (remainingDays <= 7) {
+    return ['Critical: Complete police clearance urgently', 'Prepare all documents for next stage'];
+  }
+  if (remainingDays <= 15) {
+    return ['Submit police clearance application', 'Ensure all medical documents are filed'];
+  }
+  if (remainingDays <= 30) {
+    return ['Schedule police clearance appointment', 'Review document requirements'];
+  }
+  return ['Proceed with normal processing', 'Monitor expiry timeline'];
+}
+
+function getVisaNextSteps(remainingDays: number): string[] {
+  if (remainingDays < 0) {
+    return ['Visa has expired', 'Contact embassy for renewal or extension'];
+  }
+  if (remainingDays <= 7) {
+    return ['Critical: Book flight immediately', 'Complete all pre-departure formalities'];
+  }
+  if (remainingDays <= 15) {
+    return ['Finalize flight bookings', 'Complete manpower documentation'];
+  }
+  if (remainingDays <= 30) {
+    return ['Start flight search', 'Prepare travel documents'];
+  }
+  return ['Proceed with normal processing', 'Monitor expiry timeline'];
+}
 
 interface CandidateDetailsDialogProps {
   candidate: Candidate | null;
@@ -157,33 +208,30 @@ export function CandidateDetailsDialog({ candidate, open, onOpenChange }: Candid
                 value={format(new Date(candidate.medical_fit_date), 'MMM dd, yyyy')} 
               />
             )}
-            {candidate.current_stage === 'medical' && candidate.medical_expiry_date && (
-              <DetailItem 
-                icon={Calendar} 
-                label="Medical Expiry Date" 
-                value={format(new Date(candidate.medical_expiry_date), 'MMM dd, yyyy')} 
-              />
-            )}
-            {candidate.current_stage === 'visa_issued' && candidate.visa_issue_date && (
-              <DetailItem 
-                icon={Calendar} 
-                label="Visa Issue Date" 
-                value={format(new Date(candidate.visa_issue_date), 'MMM dd, yyyy')} 
-              />
-            )}
-            {candidate.current_stage === 'visa_issued' && candidate.visa_expiry_date && (
-              <DetailItem 
-                icon={Calendar} 
-                label="Visa Expiry Date" 
-                value={format(new Date(candidate.visa_expiry_date), 'MMM dd, yyyy')} 
-              />
-            )}
             <DetailItem 
               icon={Calendar} 
               label="Added On" 
               value={format(new Date(candidate.created_at), 'MMM dd, yyyy')} 
             />
           </div>
+
+          {/* Medical Expiry Info with Next Steps */}
+          {candidate.current_stage === 'medical' && candidate.medical_fit_date && (
+            <ExpiryInfoSection 
+              issueDate={candidate.medical_fit_date}
+              validityDays={60}
+              type="medical"
+            />
+          )}
+
+          {/* Visa Expiry Info with Next Steps */}
+          {candidate.current_stage === 'visa_issued' && candidate.visa_issue_date && (
+            <ExpiryInfoSection 
+              issueDate={candidate.visa_issue_date}
+              validityDays={90}
+              type="visa"
+            />
+          )}
 
           {/* Notes */}
           {candidate.notes && (
@@ -233,6 +281,82 @@ function DetailItem({ icon: Icon, label, value }: { icon: any; label: string; va
       <div>
         <p className="text-xs text-muted-foreground">{label}</p>
         <p className="text-sm font-medium">{value}</p>
+      </div>
+    </div>
+  );
+}
+
+// Expiry Info Section Component
+function ExpiryInfoSection({ 
+  issueDate, 
+  validityDays,
+  type 
+}: { 
+  issueDate: string; 
+  validityDays: number;
+  type: 'medical' | 'visa';
+}) {
+  const expiryInfo = calculateExpiryInfo(issueDate, validityDays);
+  if (!expiryInfo) return null;
+
+  const title = type === 'medical' ? 'Medical Expiry Status' : 'Visa Expiry Status';
+  const nextSteps = type === 'medical' 
+    ? getMedicalNextSteps(expiryInfo.remainingDays) 
+    : getVisaNextSteps(expiryInfo.remainingDays);
+
+  return (
+    <div className="space-y-3">
+      <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+        <Clock className="h-4 w-4" />
+        {title}
+      </h4>
+      <div className={`rounded-lg border p-4 ${
+        expiryInfo.isExpired 
+          ? 'bg-destructive/10 border-destructive/50' 
+          : expiryInfo.isUrgent 
+            ? 'bg-amber-500/10 border-amber-500/50' 
+            : 'bg-muted/50 border-muted'
+      }`}>
+        <div className="flex items-center gap-3">
+          {expiryInfo.isExpired ? (
+            <AlertTriangle className="h-6 w-6 text-destructive" />
+          ) : expiryInfo.isUrgent ? (
+            <AlertTriangle className="h-6 w-6 text-amber-500" />
+          ) : (
+            <Clock className="h-6 w-6 text-muted-foreground" />
+          )}
+          <div>
+            <span className={`text-xl font-bold ${
+              expiryInfo.isExpired 
+                ? 'text-destructive' 
+                : expiryInfo.isUrgent 
+                  ? 'text-amber-500' 
+                  : 'text-foreground'
+            }`}>
+              {expiryInfo.isExpired 
+                ? `Expired ${Math.abs(expiryInfo.remainingDays)} days ago` 
+                : `${expiryInfo.remainingDays} days remaining`}
+            </span>
+            <p className="text-sm text-muted-foreground">
+              {type === 'medical' ? 'Medical' : 'Visa'} expires: {format(expiryInfo.expiryDate, 'MMM dd, yyyy')}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-lg bg-primary/5 border border-primary/20 p-4">
+        <h5 className="text-sm font-medium flex items-center gap-2 mb-3">
+          <ArrowRight className="h-4 w-4 text-primary" />
+          Next Steps
+        </h5>
+        <ul className="space-y-2">
+          {nextSteps.map((step, idx) => (
+            <li key={idx} className="text-sm text-muted-foreground flex items-start gap-2">
+              <span className="text-primary mt-0.5">•</span>
+              {step}
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );
