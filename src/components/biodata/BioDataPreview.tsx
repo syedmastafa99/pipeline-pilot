@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { Candidate } from '@/hooks/useCandidates';
 import { CustomField } from '@/pages/BioData';
 import {
@@ -8,8 +8,10 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Download, Printer } from 'lucide-react';
+import { Download, Printer, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 interface BioDataPreviewProps {
   open: boolean;
@@ -25,7 +27,7 @@ export function BioDataPreview({
   customFields,
 }: BioDataPreviewProps) {
   const printRef = useRef<HTMLDivElement>(null);
-
+  const [isDownloading, setIsDownloading] = useState(false);
   const handlePrint = () => {
     const printContent = printRef.current;
     if (!printContent) return;
@@ -131,8 +133,40 @@ export function BioDataPreview({
     printWindow.close();
   };
 
-  const handleDownload = () => {
-    handlePrint();
+  const handleDownload = async () => {
+    const printContent = printRef.current;
+    if (!printContent) return;
+
+    setIsDownloading(true);
+    try {
+      const canvas = await html2canvas(printContent, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+      });
+      
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+      const imgX = (pdfWidth - imgWidth * ratio) / 2;
+      const imgY = 10;
+      
+      pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+      pdf.save(`BioData_${candidate.full_name.replace(/\s+/g, '_')}.pdf`);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   const formatDate = (dateStr: string | null) => {
@@ -202,9 +236,13 @@ export function BioDataPreview({
                 <Printer className="h-4 w-4 mr-1" />
                 Print
               </Button>
-              <Button size="sm" onClick={handleDownload}>
-                <Download className="h-4 w-4 mr-1" />
-                Download
+              <Button size="sm" onClick={handleDownload} disabled={isDownloading}>
+                {isDownloading ? (
+                  <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                ) : (
+                  <Download className="h-4 w-4 mr-1" />
+                )}
+                {isDownloading ? 'Generating...' : 'Download'}
               </Button>
             </div>
           </div>
