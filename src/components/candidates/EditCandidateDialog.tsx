@@ -815,7 +815,7 @@ function MedicalExpirySection({
                 </span>
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                Expires: {format(expiryInfo.expiryDate, 'MMM dd, yyyy')}
+                Expires: {format(expiryInfo.expiryDate, 'dd MMM yyyy')}
               </p>
             </div>
           ) : (
@@ -903,7 +903,7 @@ function VisaExpirySection({
                 </span>
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                Expires: {format(expiryInfo.expiryDate, 'MMM dd, yyyy')}
+                Expires: {format(expiryInfo.expiryDate, 'dd MMM yyyy')}
               </p>
             </div>
           ) : (

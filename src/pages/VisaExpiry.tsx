@@ -123,12 +123,12 @@ export default function VisaExpiry() {
                             {candidate.visa_issue_date && (
                               <span className="flex items-center gap-1">
                                 <Calendar className="h-3.5 w-3.5" />
-                                Issued: {format(parseISO(candidate.visa_issue_date), 'MMM dd, yyyy')}
+                                Issued: {format(parseISO(candidate.visa_issue_date), 'dd MMM yyyy')}
                               </span>
                             )}
                             <span className="flex items-center gap-1">
                               <Calendar className="h-3.5 w-3.5" />
-                              Expires: {format(parseISO(candidate.visa_expiry_date), 'MMM dd, yyyy')}
+                              Expires: {format(parseISO(candidate.visa_expiry_date), 'dd MMM yyyy')}
                             </span>
                           </div>
                         </div>

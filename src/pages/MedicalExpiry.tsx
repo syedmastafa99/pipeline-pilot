@@ -123,12 +123,12 @@ export default function MedicalExpiry() {
                             {candidate.medical_fit_date && (
                               <span className="flex items-center gap-1">
                                 <Calendar className="h-3.5 w-3.5" />
-                                Fit: {format(parseISO(candidate.medical_fit_date), 'MMM dd, yyyy')}
+                                Fit: {format(parseISO(candidate.medical_fit_date), 'dd MMM yyyy')}
                               </span>
                             )}
                             <span className="flex items-center gap-1">
                               <Calendar className="h-3.5 w-3.5" />
-                              Expires: {format(parseISO(candidate.medical_expiry_date), 'MMM dd, yyyy')}
+                              Expires: {format(parseISO(candidate.medical_expiry_date), 'dd MMM yyyy')}
                             </span>
                           </div>
                         </div>
