@@ -201,11 +201,18 @@ export function CandidateDetailsDialog({ candidate, open, onOpenChange }: Candid
             {candidate.job_title && (
               <DetailItem icon={FileText} label="Job Title" value={candidate.job_title} />
             )}
-            {candidate.current_stage === 'medical' && candidate.medical_fit_date && (
+            {candidate.medical_fit_date && (
               <DetailItem 
                 icon={Calendar} 
                 label="Medical Fit Date" 
                 value={format(new Date(candidate.medical_fit_date), 'dd MMM yyyy')} 
+              />
+            )}
+            {candidate.visa_issue_date && (
+              <DetailItem 
+                icon={Calendar} 
+                label="Visa Issue Date" 
+                value={format(new Date(candidate.visa_issue_date), 'dd MMM yyyy')} 
               />
             )}
             <DetailItem 
@@ -215,8 +222,8 @@ export function CandidateDetailsDialog({ candidate, open, onOpenChange }: Candid
             />
           </div>
 
-          {/* Medical Expiry Info with Next Steps */}
-          {candidate.current_stage === 'medical' && candidate.medical_fit_date && (
+          {/* Medical Expiry Info with Next Steps - Show in all stages if medical_fit_date exists */}
+          {candidate.medical_fit_date && (
             <ExpiryInfoSection 
               issueDate={candidate.medical_fit_date}
               validityDays={60}
@@ -224,8 +231,8 @@ export function CandidateDetailsDialog({ candidate, open, onOpenChange }: Candid
             />
           )}
 
-          {/* Visa Expiry Info with Next Steps */}
-          {candidate.current_stage === 'visa_issued' && candidate.visa_issue_date && (
+          {/* Visa Expiry Info with Next Steps - Show in all stages if visa_issue_date exists */}
+          {candidate.visa_issue_date && (
             <ExpiryInfoSection 
               issueDate={candidate.visa_issue_date}
               validityDays={90}
