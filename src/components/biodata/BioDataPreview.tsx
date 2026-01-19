@@ -152,6 +152,9 @@ export function BioDataPreview({
     { label: 'Sex', value: candidate.sex },
     { label: 'Place of Birth', value: candidate.place_of_birth },
     { label: 'Nationality', value: candidate.nationality },
+    { label: 'Height', value: candidate.height },
+    { label: 'Weight', value: candidate.weight },
+    { label: 'Certificate', value: candidate.certificate },
     { label: "Father's Name", value: candidate.father_name },
     { label: "Mother's Name", value: candidate.mother_name },
     { label: 'Legal Guardian', value: candidate.legal_guardian_name },
@@ -159,8 +162,6 @@ export function BioDataPreview({
 
   const passportFields = [
     { label: 'Passport Number', value: candidate.passport_number },
-    { label: 'Passport Type', value: candidate.passport_type },
-    { label: 'Country Code', value: candidate.country_code },
     { label: 'Issue Date', value: formatDate(candidate.passport_issue_date) },
     { label: 'Expiry Date', value: formatDate(candidate.passport_expiry_date) },
     { label: 'Issuing Authority', value: candidate.issuing_authority },
@@ -174,9 +175,11 @@ export function BioDataPreview({
   ].filter(f => f.value);
 
   const employmentFields = [
+    { label: 'Company Name', value: candidate.ref_company },
+    { label: 'Trade', value: candidate.job_title },
     { label: 'Destination Country', value: candidate.destination_country },
     { label: 'Employer', value: candidate.employer },
-    { label: 'Job Title', value: candidate.job_title },
+    { label: 'Agent Name', value: candidate.agent_name },
   ].filter(f => f.value);
 
   const emergencyFields = [
@@ -212,7 +215,7 @@ export function BioDataPreview({
           className="bg-white text-black p-8 rounded-lg border"
           style={{ fontFamily: "'Times New Roman', serif" }}
         >
-          {/* Header */}
+          {/* Header with Company Name and Trade beside photo */}
           <div className="header text-center border-b-2 border-black pb-5 mb-8">
             <h1 className="text-2xl font-bold uppercase tracking-wide m-0">
               Bio Data
@@ -222,22 +225,47 @@ export function BioDataPreview({
             </p>
           </div>
 
-          {/* Photo placeholder */}
-          <div className="float-right w-[120px] h-[150px] border border-gray-300 flex items-center justify-center ml-5 mb-2">
-            {candidate.passport_scan_url ? (
-              <img 
-                src={candidate.passport_scan_url} 
-                alt="Photo"
-                className="max-w-full max-h-full object-cover"
-              />
-            ) : (
-              <span className="text-xs text-gray-400">Photo</span>
-            )}
+          {/* Top section with Photo and Company/Trade info */}
+          <div className="flex justify-between items-start mb-6">
+            <div className="flex-1">
+              {candidate.ref_company && (
+                <div className="field-row flex mb-2 text-sm">
+                  <span className="field-label w-[120px] font-semibold text-gray-700">
+                    Company Name:
+                  </span>
+                  <span className="field-value flex-1 font-bold text-base">
+                    {candidate.ref_company}
+                  </span>
+                </div>
+              )}
+              {candidate.job_title && (
+                <div className="field-row flex mb-2 text-sm">
+                  <span className="field-label w-[120px] font-semibold text-gray-700">
+                    Trade:
+                  </span>
+                  <span className="field-value flex-1 font-bold text-base">
+                    {candidate.job_title}
+                  </span>
+                </div>
+              )}
+            </div>
+            {/* Photo placeholder */}
+            <div className="w-[120px] h-[150px] border border-gray-300 flex items-center justify-center ml-5">
+              {candidate.passport_scan_url ? (
+                <img 
+                  src={candidate.passport_scan_url} 
+                  alt="Photo"
+                  className="max-w-full max-h-full object-cover"
+                />
+              ) : (
+                <span className="text-xs text-gray-400">Photo</span>
+              )}
+            </div>
           </div>
 
           {/* Personal Information */}
           {personalFields.length > 0 && (
-            <div className="section mb-6 clear-right">
+            <div className="section mb-6">
               <div className="section-title text-sm font-bold uppercase border-b border-gray-800 pb-1 mb-4">
                 Personal Information
               </div>

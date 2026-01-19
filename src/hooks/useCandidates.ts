@@ -50,6 +50,9 @@ export interface Candidate {
   // Additional fields
   agent_name: string | null;
   ref_company: string | null;
+  height: string | null;
+  weight: string | null;
+  certificate: string | null;
 }
 
 export interface CreateCandidateInput {
@@ -90,6 +93,9 @@ export interface CreateCandidateInput {
   // Additional fields
   agent_name?: string;
   ref_company?: string;
+  height?: string;
+  weight?: string;
+  certificate?: string;
 }
 
 export interface StageHistory {
