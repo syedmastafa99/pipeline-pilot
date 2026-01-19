@@ -116,6 +116,8 @@ interface FormData {
   visa_expiry_date: string;
   medical_fit_date: string;
   medical_expiry_date: string;
+  agent_name: string;
+  ref_company: string;
 }
 
 const initialFormData: FormData = {
@@ -154,6 +156,8 @@ const initialFormData: FormData = {
   visa_expiry_date: '',
   medical_fit_date: '',
   medical_expiry_date: '',
+  agent_name: '',
+  ref_company: '',
 };
 
 export function EditCandidateDialog({ candidate, open, onOpenChange }: EditCandidateDialogProps) {
@@ -201,6 +205,8 @@ export function EditCandidateDialog({ candidate, open, onOpenChange }: EditCandi
         visa_expiry_date: candidate.visa_expiry_date || '',
         medical_fit_date: candidate.medical_fit_date || '',
         medical_expiry_date: candidate.medical_expiry_date || '',
+        agent_name: candidate.agent_name || '',
+        ref_company: candidate.ref_company || '',
       });
       
       // Load passport preview if exists
@@ -675,6 +681,27 @@ export function EditCandidateDialog({ candidate, open, onOpenChange }: EditCandi
                       value={formData.job_title}
                       onChange={(e) => handleChange('job_title', e.target.value)}
                       placeholder="Driver, Mason, etc."
+                    />
+                  </div>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_agent_name">Agent Name</Label>
+                    <Input
+                      id="edit_agent_name"
+                      value={formData.agent_name}
+                      onChange={(e) => handleChange('agent_name', e.target.value)}
+                      placeholder="Agent Name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_ref_company">Ref Company</Label>
+                    <Input
+                      id="edit_ref_company"
+                      value={formData.ref_company}
+                      onChange={(e) => handleChange('ref_company', e.target.value)}
+                      placeholder="Reference Company"
                     />
                   </div>
                 </div>
