@@ -165,8 +165,8 @@ export function CandidateDetailsDialog({ candidate, open, onOpenChange }: Candid
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {completedDate 
-                          ? format(new Date(completedDate), 'MMM dd, yyyy')
-                          : isCurrent 
+                          ? format(new Date(completedDate), 'dd MMM yyyy')
+                          : isCurrent
                             ? 'In progress' 
                             : 'Pending'
                         }
@@ -205,13 +205,13 @@ export function CandidateDetailsDialog({ candidate, open, onOpenChange }: Candid
               <DetailItem 
                 icon={Calendar} 
                 label="Medical Fit Date" 
-                value={format(new Date(candidate.medical_fit_date), 'MMM dd, yyyy')} 
+                value={format(new Date(candidate.medical_fit_date), 'dd MMM yyyy')} 
               />
             )}
             <DetailItem 
               icon={Calendar} 
               label="Added On" 
-              value={format(new Date(candidate.created_at), 'MMM dd, yyyy')} 
+              value={format(new Date(candidate.created_at), 'dd MMM yyyy')} 
             />
           </div>
 
@@ -338,7 +338,7 @@ function ExpiryInfoSection({
                 : `${expiryInfo.remainingDays} days remaining`}
             </span>
             <p className="text-sm text-muted-foreground">
-              {type === 'medical' ? 'Medical' : 'Visa'} expires: {format(expiryInfo.expiryDate, 'MMM dd, yyyy')}
+              {type === 'medical' ? 'Medical' : 'Visa'} expires: {format(expiryInfo.expiryDate, 'dd MMM yyyy')}
             </p>
           </div>
         </div>
