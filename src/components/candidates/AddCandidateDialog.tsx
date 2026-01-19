@@ -54,6 +54,9 @@ const initialFormData: CreateCandidateInput = {
   emergency_contact_address: '',
   emergency_contact_phone: '',
   passport_scan_url: '',
+  // Additional fields
+  agent_name: '',
+  ref_company: '',
 };
 
 interface ExtractedPassportData {
@@ -632,6 +635,27 @@ export function AddCandidateDialog({ trigger }: AddCandidateDialogProps) {
                       value={formData.job_title}
                       onChange={(e) => handleChange('job_title', e.target.value)}
                       placeholder="Driver, Mason, etc."
+                    />
+                  </div>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="agent_name">Agent Name</Label>
+                    <Input
+                      id="agent_name"
+                      value={formData.agent_name}
+                      onChange={(e) => handleChange('agent_name', e.target.value)}
+                      placeholder="Agent Name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="ref_company">Ref Company</Label>
+                    <Input
+                      id="ref_company"
+                      value={formData.ref_company}
+                      onChange={(e) => handleChange('ref_company', e.target.value)}
+                      placeholder="Reference Company"
                     />
                   </div>
                 </div>
