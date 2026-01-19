@@ -231,9 +231,21 @@ export function EditCandidateDialog({ candidate, open, onOpenChange }: EditCandi
     
     if (!candidate || !formData.full_name.trim()) return;
     
+    // Convert empty date strings to null for proper database storage
+    const sanitizedData = {
+      ...formData,
+      date_of_birth: formData.date_of_birth || null,
+      passport_issue_date: formData.passport_issue_date || null,
+      passport_expiry_date: formData.passport_expiry_date || null,
+      visa_issue_date: formData.visa_issue_date || null,
+      visa_expiry_date: formData.visa_expiry_date || null,
+      medical_fit_date: formData.medical_fit_date || null,
+      medical_expiry_date: formData.medical_expiry_date || null,
+    };
+    
     await updateCandidate.mutateAsync({
       id: candidate.id,
-      ...formData,
+      ...sanitizedData,
     });
     
     onOpenChange(false);
