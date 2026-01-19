@@ -57,6 +57,9 @@ const initialFormData: CreateCandidateInput = {
   // Additional fields
   agent_name: '',
   ref_company: '',
+  height: '',
+  weight: '',
+  certificate: '',
 };
 
 interface ExtractedPassportData {
@@ -541,6 +544,36 @@ export function AddCandidateDialog({ trigger }: AddCandidateDialogProps) {
 
               {/* Personal Data Tab */}
               <TabsContent value="personal" className="space-y-4 mt-0">
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="height">Height</Label>
+                    <Input
+                      id="height"
+                      value={formData.height}
+                      onChange={(e) => handleChange('height', e.target.value)}
+                      placeholder="5'8'' or 173 cm"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="weight">Weight</Label>
+                    <Input
+                      id="weight"
+                      value={formData.weight}
+                      onChange={(e) => handleChange('weight', e.target.value)}
+                      placeholder="70 kg"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="certificate">Certificate</Label>
+                    <Input
+                      id="certificate"
+                      value={formData.certificate}
+                      onChange={(e) => handleChange('certificate', e.target.value)}
+                      placeholder="SSC, HSC, Diploma, etc."
+                    />
+                  </div>
+                </div>
+
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="father_name">Father's Name</Label>

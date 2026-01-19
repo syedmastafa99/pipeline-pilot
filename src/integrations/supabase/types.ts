@@ -160,6 +160,7 @@ export type Database = {
       candidates: {
         Row: {
           agent_name: string | null
+          certificate: string | null
           country_code: string | null
           created_at: string
           current_stage: Database["public"]["Enums"]["candidate_stage"]
@@ -174,6 +175,7 @@ export type Database = {
           father_name: string | null
           full_name: string
           given_name: string | null
+          height: string | null
           id: string
           issuing_authority: string | null
           job_title: string | null
@@ -200,9 +202,11 @@ export type Database = {
           user_id: string | null
           visa_expiry_date: string | null
           visa_issue_date: string | null
+          weight: string | null
         }
         Insert: {
           agent_name?: string | null
+          certificate?: string | null
           country_code?: string | null
           created_at?: string
           current_stage?: Database["public"]["Enums"]["candidate_stage"]
@@ -217,6 +221,7 @@ export type Database = {
           father_name?: string | null
           full_name: string
           given_name?: string | null
+          height?: string | null
           id?: string
           issuing_authority?: string | null
           job_title?: string | null
@@ -243,9 +248,11 @@ export type Database = {
           user_id?: string | null
           visa_expiry_date?: string | null
           visa_issue_date?: string | null
+          weight?: string | null
         }
         Update: {
           agent_name?: string | null
+          certificate?: string | null
           country_code?: string | null
           created_at?: string
           current_stage?: Database["public"]["Enums"]["candidate_stage"]
@@ -260,6 +267,7 @@ export type Database = {
           father_name?: string | null
           full_name?: string
           given_name?: string | null
+          height?: string | null
           id?: string
           issuing_authority?: string | null
           job_title?: string | null
@@ -286,6 +294,7 @@ export type Database = {
           user_id?: string | null
           visa_expiry_date?: string | null
           visa_issue_date?: string | null
+          weight?: string | null
         }
         Relationships: []
       }

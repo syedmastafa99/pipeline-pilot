@@ -118,6 +118,9 @@ interface FormData {
   medical_expiry_date: string;
   agent_name: string;
   ref_company: string;
+  height: string;
+  weight: string;
+  certificate: string;
 }
 
 const initialFormData: FormData = {
@@ -158,6 +161,9 @@ const initialFormData: FormData = {
   medical_expiry_date: '',
   agent_name: '',
   ref_company: '',
+  height: '',
+  weight: '',
+  certificate: '',
 };
 
 export function EditCandidateDialog({ candidate, open, onOpenChange }: EditCandidateDialogProps) {
@@ -207,6 +213,9 @@ export function EditCandidateDialog({ candidate, open, onOpenChange }: EditCandi
         medical_expiry_date: candidate.medical_expiry_date || '',
         agent_name: candidate.agent_name || '',
         ref_company: candidate.ref_company || '',
+        height: candidate.height || '',
+        weight: candidate.weight || '',
+        certificate: candidate.certificate || '',
       });
       
       // Load passport preview if exists
@@ -587,6 +596,36 @@ export function EditCandidateDialog({ candidate, open, onOpenChange }: EditCandi
 
               {/* Personal Data Tab */}
               <TabsContent value="personal" className="space-y-4 mt-0">
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_height">Height</Label>
+                    <Input
+                      id="edit_height"
+                      value={formData.height}
+                      onChange={(e) => handleChange('height', e.target.value)}
+                      placeholder="5'8'' or 173 cm"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_weight">Weight</Label>
+                    <Input
+                      id="edit_weight"
+                      value={formData.weight}
+                      onChange={(e) => handleChange('weight', e.target.value)}
+                      placeholder="70 kg"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_certificate">Certificate</Label>
+                    <Input
+                      id="edit_certificate"
+                      value={formData.certificate}
+                      onChange={(e) => handleChange('certificate', e.target.value)}
+                      placeholder="SSC, HSC, Diploma, etc."
+                    />
+                  </div>
+                </div>
+
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="edit_father_name">Father's Name</Label>
