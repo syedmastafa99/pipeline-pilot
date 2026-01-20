@@ -14,6 +14,7 @@ import Upload from "./pages/Upload";
 import Settings from "./pages/Settings";
 import Accounting from "./pages/Accounting";
 import Admin from "./pages/Admin";
+import ActivityLogs from "./pages/ActivityLogs";
 import Auth from "./pages/Auth";
 import PendingApproval from "./pages/PendingApproval";
 import NotFound from "./pages/NotFound";
@@ -42,6 +43,7 @@ const App = () => (
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           <Route path="/accounting" element={<ProtectedRoute><Accounting /></ProtectedRoute>} />
           <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
+          <Route path="/activity-logs" element={<AdminRoute><ActivityLogs /></AdminRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

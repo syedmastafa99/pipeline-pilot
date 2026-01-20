@@ -12,6 +12,7 @@ import {
   CalendarClock,
   Stethoscope,
   Calculator,
+  History,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import {
@@ -51,6 +52,7 @@ const settingsNavItems = [
 
 const adminNavItems = [
   { title: 'Admin', url: '/admin', icon: ShieldCheck },
+  { title: 'Activity Logs', url: '/activity-logs', icon: History },
 ];
 
 export function AppSidebar() {
