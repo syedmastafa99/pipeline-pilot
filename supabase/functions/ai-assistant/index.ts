@@ -19,27 +19,84 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    // Create Supabase client to fetch context data
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    // Validate user authentication
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "No authorization header" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
-    // Fetch current pipeline data for context
-    const { data: candidates } = await supabase
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    
+    // Create client with user's token to verify authentication
+    const token = authHeader.replace("Bearer ", "");
+    const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: `Bearer ${token}` } }
+    });
+    
+    // Verify the user is authenticated
+    const { data: { user }, error: userError } = await supabaseAuth.auth.getUser(token);
+    
+    if (userError || !user) {
+      console.error("Auth error:", userError);
+      return new Response(JSON.stringify({ error: "Unauthorized - invalid or expired token" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Check if user is approved
+    const supabaseService = createClient(supabaseUrl, supabaseServiceKey);
+    const { data: profile } = await supabaseService
+      .from('profiles')
+      .select('is_approved')
+      .eq('id', user.id)
+      .single();
+    
+    if (!profile?.is_approved) {
+      return new Response(JSON.stringify({ error: "Account not approved" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Check if user is admin
+    const { data: isAdmin } = await supabaseService.rpc("has_role", {
+      _user_id: user.id,
+      _role: "admin",
+    });
+
+    // Fetch current pipeline data for context - SCOPED TO USER'S DATA
+    let candidatesQuery = supabaseService
       .from('candidates')
       .select('*')
       .order('updated_at', { ascending: false });
 
-    const { data: tasks } = await supabase
+    let tasksQuery = supabaseService
       .from('agency_tasks')
       .select('*')
       .order('due_date', { ascending: true });
 
-    const { data: recentReports } = await supabase
+    let reportsQuery = supabaseService
       .from('daily_reports')
       .select('*')
       .order('report_date', { ascending: false })
       .limit(7);
+
+    // If not admin, filter by user_id
+    if (!isAdmin) {
+      candidatesQuery = candidatesQuery.eq('user_id', user.id);
+      tasksQuery = tasksQuery.eq('user_id', user.id);
+      reportsQuery = reportsQuery.eq('user_id', user.id);
+    }
+
+    const { data: candidates } = await candidatesQuery;
+    const { data: tasks } = await tasksQuery;
+    const { data: recentReports } = await reportsQuery;
 
     // Calculate pipeline statistics
     const stageCount: Record<string, number> = {};
@@ -63,11 +120,15 @@ serve(async (req) => {
     const pendingTasks = tasks?.filter(t => t.status !== 'completed') || [];
     const urgentTasks = pendingTasks.filter(t => t.priority === 'urgent');
 
+    const dataScope = isAdmin ? "all users" : "your account";
+
     const systemPrompt = `You are RecruitFlow AI, an intelligent assistant for a recruitment agency tracking system. You help with:
 - Answering questions about candidates in the pipeline
 - Generating report summaries
 - Identifying pipeline bottlenecks and providing insights
 - Suggesting optimizations for the recruitment workflow
+
+Note: You are showing data for ${dataScope}.
 
 Current Pipeline Statistics:
 - Total Candidates: ${candidates?.length || 0}
@@ -88,7 +149,7 @@ ${recentReports?.map(r => `- ${r.report_date}: ${r.total_candidates} total, ${r.
 
 Be helpful, concise, and provide actionable insights. When discussing bottlenecks, suggest specific actions to improve flow. Format responses with markdown for readability.`;
 
-    console.log('Sending request to AI gateway with context');
+    console.log('Sending request to AI gateway with authenticated context for user:', user.email);
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
