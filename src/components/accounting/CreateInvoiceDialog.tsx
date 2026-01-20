@@ -73,7 +73,7 @@ export function CreateInvoiceDialog() {
         client_email: clientEmail || null,
         client_phone: clientPhone || null,
         client_address: clientAddress || null,
-        candidate_id: candidateId || null,
+        candidate_id: candidateId && candidateId !== 'none' ? candidateId : null,
         issue_date: issueDate,
         due_date: dueDate || null,
         subtotal,
@@ -146,7 +146,7 @@ export function CreateInvoiceDialog() {
                   <SelectValue placeholder="Select candidate" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">None</SelectItem>
+                  <SelectItem value="none">None</SelectItem>
                   {candidates?.map((c) => (
                     <SelectItem key={c.id} value={c.id}>
                       {c.full_name}
