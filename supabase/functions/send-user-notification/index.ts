@@ -125,7 +125,7 @@ const handler = async (req: Request): Promise<Response> => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "RecruitFlow <onboarding@resend.dev>",
+        from: "RecruitFlow <noreply@zenovait.com>",
         to: [email],
         subject,
         html: htmlContent,
