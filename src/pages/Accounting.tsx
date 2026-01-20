@@ -5,7 +5,8 @@ import { AddTransactionDialog } from '@/components/accounting/AddTransactionDial
 import { TransactionsList } from '@/components/accounting/TransactionsList';
 import { CreateInvoiceDialog } from '@/components/accounting/CreateInvoiceDialog';
 import { InvoicesList } from '@/components/accounting/InvoicesList';
-import { Calculator, Receipt, FileText } from 'lucide-react';
+import { CandidateFinancialReport } from '@/components/accounting/CandidateFinancialReport';
+import { Calculator, Receipt, FileText, UserCircle } from 'lucide-react';
 
 export default function Accounting() {
   return (
@@ -36,6 +37,10 @@ export default function Accounting() {
               <FileText className="h-4 w-4" />
               Invoices
             </TabsTrigger>
+            <TabsTrigger value="reports" className="flex items-center gap-2">
+              <UserCircle className="h-4 w-4" />
+              Candidate Reports
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="transactions" className="space-y-4">
@@ -50,6 +55,10 @@ export default function Accounting() {
               <CreateInvoiceDialog />
             </div>
             <InvoicesList />
+          </TabsContent>
+
+          <TabsContent value="reports" className="space-y-4">
+            <CandidateFinancialReport />
           </TabsContent>
         </Tabs>
       </div>
