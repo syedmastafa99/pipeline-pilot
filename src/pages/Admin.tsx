@@ -3,6 +3,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserCard } from "@/components/admin/UserCard";
+import { InviteUserDialog } from "@/components/admin/InviteUserDialog";
+import { InvitationsList } from "@/components/admin/InvitationsList";
 import { 
   usePendingUsers, 
   useApprovedUsers, 
@@ -11,13 +13,17 @@ import {
   useRejectUser,
   useDeleteUser,
 } from "@/hooks/useAdminUsers";
+import { useInvitations } from "@/hooks/useInvitations";
 import { toast } from "sonner";
-import { Users, UserCheck, UserX, Clock } from "lucide-react";
+import { Users, UserCheck, UserX, Clock, Mail } from "lucide-react";
 
 export default function Admin() {
   const { data: pendingUsers, isLoading: loadingPending } = usePendingUsers();
   const { data: approvedUsers, isLoading: loadingApproved } = useApprovedUsers();
   const { data: rejectedUsers, isLoading: loadingRejected } = useRejectedUsers();
+  const { invitations } = useInvitations();
+  
+  const pendingInvitations = invitations.filter(i => i.status === 'pending');
   
   const approveUser = useApproveUser();
   const rejectUser = useRejectUser();
@@ -61,22 +67,25 @@ export default function Admin() {
   return (
     <AppLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="font-display text-3xl font-bold text-foreground">
-            Admin Dashboard
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Manage user approvals and access
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="font-display text-3xl font-bold text-foreground">
+              Admin Dashboard
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Manage user approvals and access
+            </p>
+          </div>
+          <InviteUserDialog />
         </div>
 
         {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                  <Clock className="h-5 w-5 text-amber-500" />
+                <div className="h-10 w-10 rounded-lg bg-warning/10 flex items-center justify-center">
+                  <Clock className="h-5 w-5 text-warning" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{pendingUsers?.length ?? 0}</p>
@@ -111,11 +120,24 @@ export default function Admin() {
               </div>
             </CardContent>
           </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Mail className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{pendingInvitations.length}</p>
+                  <p className="text-sm text-muted-foreground">Pending Invites</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Tabs for user management */}
         <Tabs defaultValue="pending" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-3 max-w-md">
+          <TabsList className="grid w-full grid-cols-4 max-w-xl">
             <TabsTrigger value="pending" className="gap-2">
               <Clock className="h-4 w-4" />
               Pending
@@ -127,6 +149,10 @@ export default function Admin() {
             <TabsTrigger value="rejected" className="gap-2">
               <UserX className="h-4 w-4" />
               Rejected
+            </TabsTrigger>
+            <TabsTrigger value="invitations" className="gap-2">
+              <Mail className="h-4 w-4" />
+              Invites
             </TabsTrigger>
           </TabsList>
 
@@ -228,6 +254,20 @@ export default function Admin() {
                     No rejected users
                   </p>
                 )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="invitations">
+            <Card>
+              <CardHeader>
+                <CardTitle>Team Invitations</CardTitle>
+                <CardDescription>
+                  Manage pending invitations sent to team members
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <InvitationsList />
               </CardContent>
             </Card>
           </TabsContent>
