@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Loader2, Users, ArrowLeft } from 'lucide-react';
+import { Loader2, Users, ArrowLeft, Mail } from 'lucide-react';
 import { z } from 'zod';
+import { Badge } from '@/components/ui/badge';
 
 const emailSchema = z.string().email('Please enter a valid email address');
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
@@ -33,12 +35,38 @@ export default function Auth() {
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   
   const isResetMode = searchParams.get('reset') === 'true';
+  const inviteToken = searchParams.get('invite');
 
   useEffect(() => {
     if (user && !loading && !isResetMode) {
+      // If user just signed up with invite, accept the invitation
+      if (inviteToken) {
+        acceptInvitation();
+      } else {
+        navigate('/');
+      }
+    }
+  }, [user, loading, navigate, isResetMode, inviteToken]);
+
+  const acceptInvitation = async () => {
+    if (!inviteToken) return;
+    
+    try {
+      const { data, error } = await supabase.rpc('accept_invitation', {
+        _token: inviteToken,
+      });
+      
+      if (error) throw error;
+      
+      if (data) {
+        toast.success('Invitation accepted! Welcome to the team.');
+      }
+      navigate('/');
+    } catch (error) {
+      console.error('Error accepting invitation:', error);
       navigate('/');
     }
-  }, [user, loading, navigate, isResetMode]);
+  };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -286,13 +314,21 @@ export default function Auth() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="login" className="w-full">
+          <Tabs defaultValue={inviteToken ? "signup" : "login"} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="login">Sign In</TabsTrigger>
               <TabsTrigger value="signup">Sign Up</TabsTrigger>
             </TabsList>
             
             <TabsContent value="login">
+              {inviteToken && (
+                <div className="mb-4 p-3 rounded-lg bg-primary/10 border border-primary/20">
+                  <div className="flex items-center gap-2 text-sm text-primary">
+                    <Mail className="h-4 w-4" />
+                    <span>You have an invitation! Sign in if you have an account, or sign up to accept it.</span>
+                  </div>
+                </div>
+              )}
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="login-email">Email</Label>
@@ -338,6 +374,14 @@ export default function Auth() {
             </TabsContent>
             
             <TabsContent value="signup">
+              {inviteToken && (
+                <div className="mb-4 p-3 rounded-lg bg-success/10 border border-success/20">
+                  <div className="flex items-center gap-2 text-sm text-success">
+                    <Mail className="h-4 w-4" />
+                    <span>Create your account to accept the invitation and join the team!</span>
+                  </div>
+                </div>
+              )}
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="signup-email">Email</Label>
