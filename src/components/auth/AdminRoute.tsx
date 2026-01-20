@@ -1,7 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { useUserRole } from '@/hooks/useUserRole';
+import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 
 interface AdminRouteProps {
@@ -10,21 +10,43 @@ interface AdminRouteProps {
 
 export function AdminRoute({ children }: AdminRouteProps) {
   const { user, loading: authLoading } = useAuth();
-  const { isAdmin, loading: roleLoading } = useUserRole();
   const navigate = useNavigate();
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (authLoading) return;
+
+    if (!user) {
       navigate('/auth');
       return;
     }
 
-    if (!roleLoading && user && !isAdmin) {
+    const checkAdminStatus = async () => {
+      try {
+        const { data } = await supabase.rpc('has_role', {
+          _user_id: user.id,
+          _role: 'admin',
+        });
+        setIsAdmin(Boolean(data));
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+        setIsAdmin(false);
+      } finally {
+        setChecking(false);
+      }
+    };
+
+    checkAdminStatus();
+  }, [user, authLoading, navigate]);
+
+  useEffect(() => {
+    if (!checking && isAdmin === false) {
       navigate('/');
     }
-  }, [user, authLoading, isAdmin, roleLoading, navigate]);
+  }, [checking, isAdmin, navigate]);
 
-  if (authLoading || roleLoading) {
+  if (authLoading || checking) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
