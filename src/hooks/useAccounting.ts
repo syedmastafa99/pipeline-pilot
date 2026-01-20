@@ -293,13 +293,19 @@ export function useDeleteInvoice() {
   });
 }
 
-export function useAccountingSummary() {
+export function useAccountingSummary(candidateId?: string | null) {
   return useQuery({
-    queryKey: ['accounting_summary'],
+    queryKey: ['accounting_summary', candidateId],
     queryFn: async () => {
-      const { data: transactions, error } = await supabase
+      let query = supabase
         .from('transactions')
-        .select('type, amount, transaction_date');
+        .select('type, amount, transaction_date, candidate_id');
+
+      if (candidateId) {
+        query = query.eq('candidate_id', candidateId);
+      }
+
+      const { data: transactions, error } = await query;
 
       if (error) throw error;
 
