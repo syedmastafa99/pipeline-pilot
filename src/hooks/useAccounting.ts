@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { logActivity } from '@/hooks/useActivityLogs';
 
 export interface Transaction {
   id: string;
@@ -133,6 +134,16 @@ export function useCreateTransaction() {
         .single();
 
       if (error) throw error;
+      
+      // Log activity
+      await logActivity({
+        action: 'create',
+        table_name: 'transactions',
+        record_id: data.id,
+        new_data: data,
+        description: `Created ${transaction.type} transaction: ${transaction.description || 'No description'} (${transaction.amount})`,
+      });
+      
       return data;
     },
     onSuccess: () => {
@@ -151,6 +162,13 @@ export function useUpdateTransaction() {
 
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Transaction> & { id: string }) => {
+      // Get old data first
+      const { data: oldData } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
       const { data, error } = await supabase
         .from('transactions')
         .update(updates)
@@ -159,6 +177,17 @@ export function useUpdateTransaction() {
         .single();
 
       if (error) throw error;
+      
+      // Log activity
+      await logActivity({
+        action: 'update',
+        table_name: 'transactions',
+        record_id: id,
+        old_data: oldData,
+        new_data: data,
+        description: `Updated transaction: ${data.description || 'No description'}`,
+      });
+      
       return data;
     },
     onSuccess: () => {
@@ -177,12 +206,28 @@ export function useDeleteTransaction() {
 
   return useMutation({
     mutationFn: async (id: string) => {
+      // Get old data first
+      const { data: oldData } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
       const { error } = await supabase
         .from('transactions')
         .delete()
         .eq('id', id);
 
       if (error) throw error;
+      
+      // Log activity
+      await logActivity({
+        action: 'delete',
+        table_name: 'transactions',
+        record_id: id,
+        old_data: oldData,
+        description: `Deleted transaction: ${oldData?.description || 'No description'} (${oldData?.amount})`,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
@@ -232,6 +277,15 @@ export function useCreateInvoice() {
         if (itemsError) throw itemsError;
       }
 
+      // Log activity
+      await logActivity({
+        action: 'create',
+        table_name: 'invoices',
+        record_id: invoiceData.id,
+        new_data: { ...invoiceData, items_count: items.length },
+        description: `Created invoice ${invoice.invoice_number} for ${invoice.client_name} (${invoice.total_amount})`,
+      });
+
       return invoiceData;
     },
     onSuccess: () => {
@@ -250,6 +304,13 @@ export function useUpdateInvoice() {
 
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Invoice> & { id: string }) => {
+      // Get old data first
+      const { data: oldData } = await supabase
+        .from('invoices')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
       const { data, error } = await supabase
         .from('invoices')
         .update(updates)
@@ -258,6 +319,17 @@ export function useUpdateInvoice() {
         .single();
 
       if (error) throw error;
+      
+      // Log activity
+      await logActivity({
+        action: 'update',
+        table_name: 'invoices',
+        record_id: id,
+        old_data: oldData,
+        new_data: data,
+        description: `Updated invoice ${data.invoice_number}${updates.status ? ` - Status: ${updates.status}` : ''}`,
+      });
+      
       return data;
     },
     onSuccess: () => {
@@ -276,12 +348,28 @@ export function useDeleteInvoice() {
 
   return useMutation({
     mutationFn: async (id: string) => {
+      // Get old data first
+      const { data: oldData } = await supabase
+        .from('invoices')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
       const { error } = await supabase
         .from('invoices')
         .delete()
         .eq('id', id);
 
       if (error) throw error;
+      
+      // Log activity
+      await logActivity({
+        action: 'delete',
+        table_name: 'invoices',
+        record_id: id,
+        old_data: oldData,
+        description: `Deleted invoice ${oldData?.invoice_number} for ${oldData?.client_name}`,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
