@@ -104,7 +104,7 @@ const handler = async (req: Request): Promise<Response> => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "Team Invitation <onboarding@resend.dev>",
+        from: "RecruitFlow <noreply@zenovait.com>",
         to: [email],
         subject: "You've been invited to join the team!",
         html: `
