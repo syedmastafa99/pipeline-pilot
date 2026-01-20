@@ -13,8 +13,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Check, X, Trash2, User, Clock, Mail } from "lucide-react";
+import { Check, X, Trash2, User, Clock, Shield, ShieldCheck } from "lucide-react";
 import { format } from "date-fns";
 import type { UserProfile } from "@/hooks/useAdminUsers";
 
@@ -23,9 +30,11 @@ interface UserCardProps {
   onApprove?: (userId: string, email: string | null) => void;
   onReject?: (userId: string, email: string | null, reason?: string) => void;
   onDelete?: (userId: string) => void;
+  onRoleChange?: (userId: string, role: 'admin' | 'user') => void;
   showApprove?: boolean;
   showReject?: boolean;
   showDelete?: boolean;
+  showRoleChange?: boolean;
   isLoading?: boolean;
 }
 
@@ -34,9 +43,11 @@ export function UserCard({
   onApprove,
   onReject,
   onDelete,
+  onRoleChange,
   showApprove = false,
   showReject = false,
   showDelete = false,
+  showRoleChange = false,
   isLoading = false,
 }: UserCardProps) {
   const [rejectReason, setRejectReason] = useState("");
@@ -50,6 +61,23 @@ export function UserCard({
       default:
         return <Badge variant="secondary">Pending</Badge>;
     }
+  };
+
+  const getRoleBadge = () => {
+    if (user.role === 'admin') {
+      return (
+        <Badge className="bg-primary/10 text-primary border-primary/20 gap-1">
+          <ShieldCheck className="h-3 w-3" />
+          Admin
+        </Badge>
+      );
+    }
+    return (
+      <Badge variant="secondary" className="gap-1">
+        <Shield className="h-3 w-3" />
+        User
+      </Badge>
+    );
   };
 
   return (
@@ -66,6 +94,7 @@ export function UserCard({
                   {user.email || "No email"}
                 </span>
                 {getStatusBadge()}
+                {showRoleChange && getRoleBadge()}
               </div>
               <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1">
@@ -82,6 +111,22 @@ export function UserCard({
           </div>
 
           <div className="flex items-center gap-2 flex-shrink-0">
+            {showRoleChange && onRoleChange && (
+              <Select
+                value={user.role || 'user'}
+                onValueChange={(value: 'admin' | 'user') => onRoleChange(user.id, value)}
+                disabled={isLoading}
+              >
+                <SelectTrigger className="w-[100px] h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="user">User</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+
             {showApprove && onApprove && (
               <Button
                 size="sm"

@@ -9,6 +9,13 @@ export interface UserProfile {
   rejection_reason: string | null;
   created_at: string;
   updated_at: string;
+  role?: 'admin' | 'user';
+}
+
+interface UserRole {
+  id: string;
+  user_id: string;
+  role: 'admin' | 'user';
 }
 
 async function sendNotificationEmail(email: string, type: "approved" | "rejected", reason?: string) {
@@ -61,14 +68,32 @@ export function useApprovedUsers() {
   return useQuery({
     queryKey: ["admin-approved-users"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Get approved profiles
+      const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
         .select("*")
         .eq("status", "approved")
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      return data as UserProfile[];
+      if (profilesError) throw profilesError;
+
+      // Get all user roles
+      const { data: roles, error: rolesError } = await supabase
+        .from("user_roles")
+        .select("*");
+
+      if (rolesError) throw rolesError;
+
+      // Combine profiles with roles
+      const usersWithRoles = (profiles as UserProfile[]).map(profile => {
+        const userRole = (roles as UserRole[]).find(r => r.user_id === profile.id);
+        return {
+          ...profile,
+          role: userRole?.role || 'user' as const,
+        };
+      });
+
+      return usersWithRoles;
     },
   });
 }
@@ -166,6 +191,43 @@ export function useDeleteUser() {
       queryClient.invalidateQueries({ queryKey: ["admin-pending-users"] });
       queryClient.invalidateQueries({ queryKey: ["admin-approved-users"] });
       queryClient.invalidateQueries({ queryKey: ["admin-rejected-users"] });
+    },
+  });
+}
+
+export function useUpdateUserRole() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ userId, role }: { userId: string; role: 'admin' | 'user' }) => {
+      // First, check if user already has any role
+      const { data: existingRoles, error: fetchError } = await supabase
+        .from("user_roles")
+        .select("*")
+        .eq("user_id", userId);
+
+      if (fetchError) throw fetchError;
+
+      if (existingRoles && existingRoles.length > 0) {
+        // Update existing role
+        const { error } = await supabase
+          .from("user_roles")
+          .update({ role })
+          .eq("user_id", userId);
+
+        if (error) throw error;
+      } else {
+        // Insert new role
+        const { error } = await supabase
+          .from("user_roles")
+          .insert({ user_id: userId, role });
+
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-approved-users"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
     },
   });
 }

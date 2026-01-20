@@ -12,6 +12,7 @@ import {
   useApproveUser,
   useRejectUser,
   useDeleteUser,
+  useUpdateUserRole,
 } from "@/hooks/useAdminUsers";
 import { useInvitations } from "@/hooks/useInvitations";
 import { toast } from "sonner";
@@ -28,6 +29,7 @@ export default function Admin() {
   const approveUser = useApproveUser();
   const rejectUser = useRejectUser();
   const deleteUser = useDeleteUser();
+  const updateUserRole = useUpdateUserRole();
 
   const handleApprove = async (userId: string, email: string | null) => {
     try {
@@ -53,6 +55,15 @@ export default function Admin() {
       toast.success("User deleted");
     } catch (error) {
       toast.error("Failed to delete user");
+    }
+  };
+
+  const handleRoleChange = async (userId: string, role: 'admin' | 'user') => {
+    try {
+      await updateUserRole.mutateAsync({ userId, role });
+      toast.success(`User role updated to ${role}`);
+    } catch (error) {
+      toast.error("Failed to update user role");
     }
   };
 
@@ -209,9 +220,11 @@ export default function Admin() {
                         user={user}
                         onReject={handleReject}
                         onDelete={handleDelete}
+                        onRoleChange={handleRoleChange}
                         showReject
                         showDelete
-                        isLoading={rejectUser.isPending || deleteUser.isPending}
+                        showRoleChange
+                        isLoading={rejectUser.isPending || deleteUser.isPending || updateUserRole.isPending}
                       />
                     ))}
                   </div>
