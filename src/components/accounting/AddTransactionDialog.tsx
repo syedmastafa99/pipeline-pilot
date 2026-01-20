@@ -32,10 +32,10 @@ export function AddTransactionDialog() {
       type,
       amount: parseFloat(amount),
       description: description || null,
-      category_id: categoryId || null,
-      candidate_id: candidateId || null,
+      category_id: categoryId && categoryId !== 'none' ? categoryId : null,
+      candidate_id: candidateId && candidateId !== 'none' ? candidateId : null,
       transaction_date: transactionDate,
-      payment_method: paymentMethod || null,
+      payment_method: paymentMethod && paymentMethod !== 'none' ? paymentMethod : null,
       reference_number: referenceNumber || null,
       notes: notes || null,
       user_id: '',
@@ -115,7 +115,7 @@ export function AddTransactionDialog() {
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">None</SelectItem>
+                  <SelectItem value="none">None</SelectItem>
                   {categories?.map((cat) => (
                     <SelectItem key={cat.id} value={cat.id}>
                       {cat.name}
@@ -142,7 +142,7 @@ export function AddTransactionDialog() {
                 <SelectValue placeholder="Select candidate" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">None</SelectItem>
+                <SelectItem value="none">None</SelectItem>
                 {candidates?.map((c) => (
                   <SelectItem key={c.id} value={c.id}>
                     {c.full_name}
@@ -160,7 +160,7 @@ export function AddTransactionDialog() {
                   <SelectValue placeholder="Select method" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">None</SelectItem>
+                  <SelectItem value="none">None</SelectItem>
                   <SelectItem value="cash">Cash</SelectItem>
                   <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
                   <SelectItem value="check">Check</SelectItem>
