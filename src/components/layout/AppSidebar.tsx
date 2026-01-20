@@ -11,6 +11,7 @@ import {
   UserSquare2,
   CalendarClock,
   Stethoscope,
+  Calculator,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import {
@@ -37,6 +38,7 @@ const mainNavItems = [
   { title: 'Pipeline', url: '/pipeline', icon: Users },
   { title: 'Tasks', url: '/tasks', icon: ClipboardList },
   { title: 'Reports', url: '/reports', icon: FileBarChart },
+  { title: 'Accounting', url: '/accounting', icon: Calculator },
   { title: 'Bio Data', url: '/biodata', icon: UserSquare2 },
   { title: 'Medical Expiry Soon', url: '/medical-expiry', icon: Stethoscope },
   { title: 'Visa Expiry Soon', url: '/visa-expiry', icon: CalendarClock },

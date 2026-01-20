@@ -12,6 +12,7 @@ import MedicalExpiry from "./pages/MedicalExpiry";
 import VisaExpiry from "./pages/VisaExpiry";
 import Upload from "./pages/Upload";
 import Settings from "./pages/Settings";
+import Accounting from "./pages/Accounting";
 import Admin from "./pages/Admin";
 import Auth from "./pages/Auth";
 import PendingApproval from "./pages/PendingApproval";
@@ -39,6 +40,7 @@ const App = () => (
           <Route path="/visa-expiry" element={<ProtectedRoute><VisaExpiry /></ProtectedRoute>} />
           <Route path="/upload" element={<ProtectedRoute><Upload /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+          <Route path="/accounting" element={<ProtectedRoute><Accounting /></ProtectedRoute>} />
           <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
